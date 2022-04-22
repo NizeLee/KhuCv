@@ -1,0 +1,337 @@
+//  MainDialog.cpp: implementation of CMainDialog (main dialog of KhuCvApp)
+//	Dept. Software Convergence, Kyung Hee University
+//	Prof. Daeho Lee, nize@khu.ac.kr
+//
+
+#include "KhuCvApp.h"
+
+#include <chrono>
+
+
+#ifdef _MSC_VER
+#ifdef _DEBUG
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+#define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
+#define new DEBUG_NEW
+#endif
+#endif
+
+BEGIN_EVENT_TABLE(CMainDialog, wxDialog)
+EVT_BUTTON(IDC_SEL_FILE_FOLDER, CMainDialog::OnSelFileFolder)
+EVT_BUTTON(IDC_RUN, CMainDialog::OnRun)
+EVT_BUTTON(IDC_PAUSE, CMainDialog::OnPause)
+EVT_BUTTON(IDC_EXAMPLE, CMainDialog::OnExample)
+EVT_TIMER(-1, CMainDialog::OnTimer)
+END_EVENT_TABLE()
+
+CMainDialog::CMainDialog(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style)
+	: wxDialog(parent, id, title, pos, size, style),
+	m_SequenceRunTimer(this, ID_TIMER_SEQUENCE_RUN), m_VideoRunTimer(this, ID_TIMER_VIDEO_RUN)
+{
+	m_pVbox = new wxBoxSizer(wxVERTICAL);
+	
+	for(int i = 0 ;i < H_BOX_SIZER_NUM; ++i)
+		m_pHbox[i] = new wxBoxSizer(wxHORIZONTAL);
+
+	m_pSelButton = new wxButton(this, IDC_SEL_FILE_FOLDER, wxT("..."), wxDefaultPosition, wxSize(30, 20));
+	m_pDisplayPathText = new wxStaticText(this, IDC_DISPLAY_PATH, wxT(""), wxDefaultPosition, wxSize(250, 20));
+	m_pFolerCheck = new wxCheckBox(this, IDC_SEL_FILE_FOLDER_CHECK, wxT("File"), wxDefaultPosition, wxSize(70, 20));
+
+	m_pHbox[0]->Add(m_pSelButton, 0);
+	m_pHbox[0]->Add(m_pDisplayPathText, 0, wxLEFT, 5);
+	m_pHbox[0]->Add(m_pFolerCheck, 1, wxLEFT, 5);
+
+	m_pListCtrl = new wxListCtrl(this, IDC_FILE_LIST_CTRL, wxDefaultPosition, wxSize(320, 150), 
+		wxLC_REPORT | wxLC_SINGLE_SEL | wxSUNKEN_BORDER);
+	long indx1 = m_pListCtrl->InsertColumn(0, "Num", wxLIST_FORMAT_LEFT, 50);
+	long indx2 = m_pListCtrl->InsertColumn(1, "File name", wxLIST_FORMAT_LEFT, 270);
+
+	m_pHbox[1]->Add(m_pListCtrl, 1);
+
+	m_pStartNum = new wxTextCtrl(this, IDC_START_NUM, wxT(" "), wxDefaultPosition, wxSize(70, 20), wxTE_RIGHT);
+	m_pEndNum = new wxTextCtrl(this, IDC_END_NUM, wxT(" "), wxDefaultPosition, wxSize(70, 20), wxTE_RIGHT);
+	m_pClearImagesCheck = new wxCheckBox(this, IDC_CLEAR_IMAGES_CHECK, wxT("Clear images"), wxDefaultPosition, wxSize(100, 20));
+	m_pClearImagesCheck->SetValue(true);
+
+	m_pHbox[2]->Add(m_pStartNum, 1);
+	m_pHbox[2]->Add(m_pEndNum, 1, wxLEFT, 5);
+	m_pHbox[2]->Add(m_pClearImagesCheck, 0, wxLEFT, 5);
+
+	m_pRunButton = new wxButton(this, IDC_RUN, wxT("Run"), wxDefaultPosition, wxSize(70, 20));
+	m_pPauseButton = new wxButton(this, IDC_PAUSE, wxT("Pause"), wxDefaultPosition, wxSize(70, 20));
+	m_pStepCheck = new wxCheckBox(this, IDC_SEL_STEP_CHECK, wxT("Step"), wxDefaultPosition, wxSize(20, 20));
+
+	m_pHbox[3]->Add(m_pRunButton, 1);
+	m_pHbox[3]->Add(m_pPauseButton, 1, wxLEFT, 5);
+	m_pHbox[3]->Add(m_pStepCheck, 1, wxLEFT, 5);
+
+	m_pExampleButton = new wxButton(this, IDC_EXAMPLE, wxT("Example"), wxDefaultPosition, wxSize(70, 20));
+	m_pHbox[4]->Add(m_pExampleButton, 1);
+
+	m_pVbox->Add(m_pHbox[0], 1, wxALIGN_CENTER | wxTOP, 5);
+	m_pVbox->Add(m_pHbox[1], 1, wxALIGN_CENTER | wxTOP, 5);
+	m_pVbox->Add(m_pHbox[2], 1, wxALIGN_CENTER | wxTOP, 5);
+	m_pVbox->Add(m_pHbox[3], 1, wxALIGN_CENTER | wxTOP, 5);
+	m_pVbox->Add(m_pHbox[4], 1, wxALIGN_CENTER | wxTOP, 5);
+
+	SetSizer(m_pVbox);
+
+	m_bRunTimer = false;
+	m_bRunPause = false;
+}
+
+CMainDialog::~CMainDialog() {
+	
+}
+
+void CMainDialog::OnSelFileFolder(wxCommandEvent& event) {
+	if (m_bRunTimer) {
+		wxMessageBox("Timer is running!!");
+		return;
+	}
+
+	m_pStartNum->Clear();
+	*m_pStartNum << 0;
+
+	bool bFileMode = m_pFolerCheck->GetValue();
+	
+	if (!bFileMode) {
+		wxDirDialog dirDialog(this, _("Folder Selection"), "", wxDD_DEFAULT_STYLE, wxDefaultPosition, wxDefaultSize,
+			wxDirDialogNameStr);
+
+		if (dirDialog.ShowModal() == wxID_CANCEL) return;
+
+		m_pListCtrl->DeleteAllItems();
+
+		m_pDisplayPathText->SetLabelText(dirDialog.GetPath());
+
+		wxDir dir(dirDialog.GetPath());
+
+		if (!dir.IsOpened()) return;
+		
+		wxString filename;
+		bool cont = dir.GetFirst(&filename);
+		int nNum = 0;
+		char NumString[100];
+		while (cont) {
+			wxString filePath = dir.GetNameWithSep() + filename;
+
+			sprintf(NumString, "%d", nNum++);
+			int len = m_pListCtrl->GetItemCount();
+			long index = m_pListCtrl->InsertItem(len, NumString);
+			m_pListCtrl->SetItem(index, 1, filePath);
+
+			cont = dir.GetNext(&filename);
+		}
+
+		m_pEndNum->Clear();
+		*m_pEndNum << nNum-1;
+	}
+	else {
+		 wxFileDialog openFileDialog(this, _("Open Video file"), "", "",
+			 "Mp4 files (*.mp4)|*.mp4", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+		 if (openFileDialog.ShowModal() == wxID_CANCEL) return;
+
+		 m_pDisplayPathText->SetLabelText(openFileDialog.GetPath());
+
+		 strcpy(m_VideoFileName, openFileDialog.GetPath());
+
+		 cv::VideoCapture vc(m_VideoFileName);
+
+		 if (vc.isOpened()) {
+			 cv::Mat videoFrame;
+
+			 float videoFPS = vc.get(cv::CAP_PROP_FPS);
+			 int videoWidth = vc.get(cv::CAP_PROP_FRAME_WIDTH);
+			 int videoHeight = vc.get(cv::CAP_PROP_FRAME_HEIGHT);
+
+			 m_pListCtrl->DeleteAllItems();
+
+			 int nNum = 0;
+			 char NumString[100];
+
+			 int nFrameCnt = vc.get(cv::CAP_PROP_FRAME_COUNT);
+			 for (int i = 0; i < nFrameCnt; ++i) {
+				 sprintf(NumString, "%d", nNum++);
+				 int len = m_pListCtrl->GetItemCount();
+				 long index = m_pListCtrl->InsertItem(len, NumString);
+				 m_pListCtrl->SetItem(index, 1, m_VideoFileName);
+			 }
+
+			 m_pEndNum->Clear();
+			 *m_pEndNum << nFrameCnt - 1;
+		 }
+	}
+}
+
+void CMainDialog::OnTimer(wxTimerEvent& event) {
+	if (m_bRunPause) return;
+
+	if (event.GetId() == ID_TIMER_SEQUENCE_RUN) {
+		if (m_nProcessingNum >= m_pListCtrl->GetItemCount()) {
+			m_bRunTimer = false;
+			m_pRunButton->SetLabelText("Run");
+			m_SequenceRunTimer.Stop();
+			return;
+		}
+
+		wxString pathNameLc = m_pListCtrl->GetItemText(m_nProcessingNum, 1);
+		m_pListCtrl->SetItemState(m_nProcessingNum, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+		m_pListCtrl->EnsureVisible(m_nProcessingNum);
+
+		char fileName[256];
+		strcpy(fileName, pathNameLc);
+
+		auto start = std::chrono::steady_clock::now();
+	
+		cv::Mat image;
+		image = cv::imread(fileName, cv::IMREAD_COLOR);
+
+		auto end = std::chrono::steady_clock::now();
+		double processingTime = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()) / 1000;
+	
+		CMainFrame* pMainFrame = (CMainFrame*)GetParent();
+		CChildFrame* pChildFrame = (CChildFrame*)(pMainFrame->GetActiveChild());
+
+		if (!image.empty()) {
+			
+			if (pChildFrame) {
+				DisplayImage(image, 0, 0, false, m_pClearImagesCheck->GetValue());
+			}
+			else {
+				NewFileOpen("New Image", image);
+			}
+
+			pMainFrame->DlgPrintf("%05d: %s, %10.5lfms", m_nProcessingNum, fileName, processingTime);
+		}
+		else
+		{
+			pMainFrame->DlgPrintf("%05d: %s - load error", m_nProcessingNum, fileName);
+		}
+
+		m_nProcessingNum++;
+	}
+	else if (event.GetId() == ID_TIMER_VIDEO_RUN) {
+		if (m_nProcessingNum >= m_pListCtrl->GetItemCount()) {
+			m_bRunTimer = false;
+			m_pRunButton->SetLabelText("Run");
+			m_SequenceRunTimer.Stop();
+			return;
+		}
+
+		if (m_VideoProcessingVc.isOpened()) {
+			cv::Mat videoFrame;
+
+			float videoFPS = m_VideoProcessingVc.get(cv::CAP_PROP_FPS);
+			int videoWidth = m_VideoProcessingVc.get(cv::CAP_PROP_FRAME_WIDTH);
+			int videoHeight = m_VideoProcessingVc.get(cv::CAP_PROP_FRAME_HEIGHT);
+
+			int nFrameCnt = m_VideoProcessingVc.get(cv::CAP_PROP_FRAME_COUNT);
+
+			m_pListCtrl->SetItemState(m_nProcessingNum, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+			m_pListCtrl->EnsureVisible(m_nProcessingNum);
+			
+			auto start = std::chrono::steady_clock::now();
+
+			m_VideoProcessingVc >> videoFrame;
+
+			auto end = std::chrono::steady_clock::now();
+			double processingTime = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()) / 1000;
+
+			if (videoFrame.empty()) {
+				m_bRunTimer = false;
+				m_pRunButton->SetLabelText("Run");
+				m_SequenceRunTimer.Stop();
+				return;
+			}
+
+			CMainFrame* pMainFrame = (CMainFrame*)GetParent();
+			CChildFrame* pChildFrame = (CChildFrame*)(pMainFrame->GetActiveChild());
+			if (pChildFrame) {
+				DisplayImage(videoFrame, 0, 0, false, m_pClearImagesCheck->GetValue());
+			}
+			else {
+				NewFileOpen("New Image", videoFrame);
+			}
+
+			pMainFrame->DlgPrintf("%05d: %s, %10.5lfms", m_nProcessingNum, "Video frame", processingTime);
+
+			m_nProcessingNum++;
+		}
+	}
+
+	if (m_pStepCheck->GetValue()) m_bRunPause = true;
+}
+
+void CMainDialog::OnPause(wxCommandEvent& event) {
+	m_bRunPause = !m_bRunPause;
+}
+
+void CMainDialog::OnRun(wxCommandEvent& event) {
+	bool bFileMode = m_pFolerCheck->GetValue();
+	
+	if (!bFileMode) {
+		if (!m_bRunTimer && m_pListCtrl->GetItemCount() > 0) {
+			m_bRunTimer = true;
+			m_bRunPause = false;
+			int nStart = 0;
+			m_pStartNum->GetLineText(0).ToInt(&nStart, 10);
+			if (nStart < 0) nStart = 0;
+			if (nStart >= m_pListCtrl->GetItemCount()) nStart = m_pListCtrl->GetItemCount() - 1;
+			m_nProcessingNum = nStart;
+			m_pRunButton->SetLabelText("Stop");
+			m_SequenceRunTimer.Start(10);
+		}
+		else {
+			m_bRunTimer = false;
+			m_pRunButton->SetLabelText("Run");
+			m_SequenceRunTimer.Stop();
+		}
+	}
+	else {
+		if (!m_bRunTimer) {
+			int nStart = 0;
+			//			m_pStartNum->GetLineText(0).ToInt(&nStart, 0);
+			//			if (nStart < 0) nStart = 0;
+			//			if (nStart >= m_pListCtrl->GetItemCount()) nStart = m_pListCtrl->GetItemCount() - 1;
+			m_nProcessingNum = nStart;
+			m_VideoProcessingVc.open(m_VideoFileName);
+			if (m_VideoProcessingVc.isOpened()) {
+				m_bRunTimer = true;
+				m_bRunPause = false;
+
+				m_pRunButton->SetLabelText("Stop");
+				m_VideoRunTimer.Start(10);
+			}
+		}
+		else {
+			m_bRunTimer = false;
+			m_pRunButton->SetLabelText("Run");
+			m_VideoRunTimer.Stop();
+		}
+	}
+}
+
+void CMainDialog::OnExample(wxCommandEvent& event) {
+	CKcImage kcImage = GetLastSelImage();
+	if (kcImage.cvImage.empty()) return;
+
+	cv::Mat cvImage = kcImage.cvImage.clone();
+
+	cv::Mat img_gray;
+	cv::cvtColor(cvImage, img_gray, cv::COLOR_BGR2GRAY);
+
+	cvImage.type();
+
+	cv::Mat img_threshold;
+	threshold(img_gray, img_threshold, 0, 255, cv::THRESH_BINARY + cv::THRESH_OTSU);
+
+	cv::Mat img_labels, stats, centroids;
+	int numOfLables = cv::connectedComponentsWithStats(img_threshold, img_labels, stats, centroids, 8, CV_32S);
+
+	DisplayImage(img_threshold, kcImage.pos.x + kcImage.cvImage.cols, kcImage.pos.y, true, false);
+	DisplayImage(img_labels, kcImage.pos.x + kcImage.cvImage.cols * 2, kcImage.pos.y, true, false);
+}
