@@ -46,6 +46,7 @@ private:
     void OnFileOpen(wxCommandEvent& event);
     void OnRecentFiles(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
+    void OnClose(wxCloseEvent& event);
 
     wxAuiManager m_AuiMgr; 
     wxListBox* m_pPrintListBox;

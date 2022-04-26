@@ -20,6 +20,7 @@ EVT_MENU(ID_QUIT, CMainFrame::OnQuit)
 EVT_MENU(IDM_OPEN, CMainFrame::OnFileOpen)
 EVT_MENU_RANGE(wxID_FILE1, wxID_FILE9, CMainFrame::OnRecentFiles)
 EVT_MENU(IDM_ABOUT, CMainFrame::OnAbout)
+EVT_CLOSE(CMainFrame::OnClose)
 END_EVENT_TABLE()
 
 CMainFrame::CMainFrame(const wxString& title)
@@ -60,27 +61,27 @@ CMainFrame::CMainFrame(const wxString& title)
     CChildFrame *pChildFrame = new CChildFrame(this, wxID_ANY, "KhuCv Image");
 
     pChildFrame->Show();
-
-
 }
 
-CMainFrame::~CMainFrame()
-{
+CMainFrame::~CMainFrame() {
     m_AuiMgr.UnInit();
 }
 
-void CMainFrame::OnQuit(wxCommandEvent& event)
-{
+void CMainFrame::OnQuit(wxCommandEvent& event) {
+    Close();
+}
+
+void CMainFrame::OnClose(wxCloseEvent& event) {
     m_pFileHistory->Save(*m_pConfig);
 
     delete m_pConfig;
     delete m_pFileHistory;
 
-    Close();
+    Destroy();
 }
 
 void CMainFrame::OnAbout(wxCommandEvent& event) {
-    wxMessageBox(wxT("KhuCv App ver. 0.0.0.1\n(Open development SW for computer vision)\nCopyright(c) 2022, \nDaeho Lee, Kyung Hee University"), wxT("KhuCv App"), wxICON_INFORMATION);
+    wxMessageBox(wxT("KhuCv App ver. 0.0.0.2\n(Open development SW for computer vision)\nCopyright(c) 2022, \nDaeho Lee, Kyung Hee University"), wxT("KhuCv App"), wxICON_INFORMATION);
 }
 
 void CMainFrame::OnFileOpen(wxCommandEvent& event)

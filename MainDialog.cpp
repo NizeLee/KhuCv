@@ -190,6 +190,9 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 		cv::Mat image;
 		image = cv::imread(fileName, cv::IMREAD_COLOR);
 
+		cv::Mat output;
+		cv::Sobel(image, output, -1, 1, 1);
+	
 		auto end = std::chrono::steady_clock::now();
 		double processingTime = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()) / 1000;
 	
@@ -200,9 +203,11 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 			
 			if (pChildFrame) {
 				DisplayImage(image, 0, 0, false, m_pClearImagesCheck->GetValue());
+				DisplayImage(output, image.cols, 0, false, false);
 			}
 			else {
 				NewFileOpen("New Image", image);
+				DisplayImage(output, image.cols, 0, false, false);
 			}
 
 			pMainFrame->DlgPrintf("%05d: %s, %10.5lfms", m_nProcessingNum, fileName, processingTime);
@@ -238,6 +243,9 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 
 			m_VideoProcessingVc >> videoFrame;
 
+			cv::Mat output;
+			cv::Sobel(videoFrame, output, -1, 1, 1);
+
 			auto end = std::chrono::steady_clock::now();
 			double processingTime = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()) / 1000;
 
@@ -252,9 +260,11 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 			CChildFrame* pChildFrame = (CChildFrame*)(pMainFrame->GetActiveChild());
 			if (pChildFrame) {
 				DisplayImage(videoFrame, 0, 0, false, m_pClearImagesCheck->GetValue());
+				DisplayImage(output, videoFrame.cols, 0, false, false);
 			}
 			else {
 				NewFileOpen("New Image", videoFrame);
+				DisplayImage(output, videoFrame.cols, 0, false, false);
 			}
 
 			pMainFrame->DlgPrintf("%05d: %s, %10.5lfms", m_nProcessingNum, "Video frame", processingTime);
