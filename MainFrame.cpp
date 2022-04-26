@@ -16,6 +16,7 @@
 #endif
 
 BEGIN_EVENT_TABLE(CMainFrame, wxMDIParentFrame)
+EVT_DROP_FILES(CMainFrame::OnDropFiles)
 EVT_MENU(ID_QUIT, CMainFrame::OnQuit)
 EVT_MENU(IDM_OPEN, CMainFrame::OnFileOpen)
 EVT_MENU_RANGE(wxID_FILE1, wxID_FILE9, CMainFrame::OnRecentFiles)
@@ -50,7 +51,6 @@ CMainFrame::CMainFrame(const wxString& title)
     m_pFileHistory->AddFilesToMenu(menuRecent);
     m_pFileHistory->Load(*m_pConfig);
     
-
     m_AuiMgr.SetManagedWindow(this);
 
     m_pPrintListBox = new wxListBox(this, IDC_PRINT_LIST, wxDefaultPosition, wxSize(1920, 150));
@@ -67,6 +67,25 @@ CMainFrame::~CMainFrame() {
     m_AuiMgr.UnInit();
 }
 
+void CMainFrame::OnDropFiles(wxDropFilesEvent& event) {
+    const wxString* files = event.GetFiles();
+
+    for(int i = 0 ; i < event.GetNumberOfFiles() ; ++i) {
+        wxFileName wxFileNameIst(files[i]);
+    
+        char filePath[256], fileName[256];
+        strcpy(filePath, files[i]);
+        strcpy(fileName, wxFileNameIst.GetFullName());
+        cv::Mat cvImage = cv::imread(filePath, cv::IMREAD_COLOR);
+
+        if (!cvImage.empty()) {
+            NewFileOpen(fileName, cvImage);
+
+            m_pFileHistory->AddFileToHistory(filePath);
+        }
+    }
+}
+
 void CMainFrame::OnQuit(wxCommandEvent& event) {
     Close();
 }
@@ -81,13 +100,13 @@ void CMainFrame::OnClose(wxCloseEvent& event) {
 }
 
 void CMainFrame::OnAbout(wxCommandEvent& event) {
-    wxMessageBox(wxT("KhuCv App ver. 0.0.0.2\n(Open development SW for computer vision)\nCopyright(c) 2022, \nDaeho Lee, Kyung Hee University"), wxT("KhuCv App"), wxICON_INFORMATION);
+    wxMessageBox(wxT("KhuCv App ver. 0.0.0.3\n(Open development SW for computer vision)\nCopyright(c) 2022, \nDaeho Lee, Kyung Hee University"), wxT("KhuCv App"), wxICON_INFORMATION);
 }
 
 void CMainFrame::OnFileOpen(wxCommandEvent& event)
 {
-    wxFileDialog openFileDialog(this, _("Open Image file"), "", "",
-            "Jpeg files (*.jpg)|*.jpg", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+    wxFileDialog openFileDialog(this, "Open Image file", "", "",
+            "Jpeg files (*.jpg)|*.jpg|Bmp files(*.bmp)|*.bmp|Gif files(*.gif)|*.gif|All files(*.*)|*.*", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
     if (openFileDialog.ShowModal() == wxID_CANCEL) return; 
 
     char filePath[256], fileName[256];

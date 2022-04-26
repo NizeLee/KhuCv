@@ -20,6 +20,8 @@ bool CKhuCvApp::OnInit()
     m_pMainFrame = new CMainFrame(wxT("KhuCV App"));
     m_pMainFrame->Maximize(true);
     m_pMainFrame->Show();
+
+    m_pMainFrame->DragAcceptFiles(true);
     
     wxSize MainFrameSize = m_pMainFrame->GetSize();
     m_pMainDialog = new CMainDialog(m_pMainFrame, wxID_ANY, wxT("Main Dialog"), wxPoint(5, MainFrameSize.y-200-350), wxSize(350, 350), wxDEFAULT_DIALOG_STYLE);
@@ -77,6 +79,13 @@ CKcImage GetLastSelImage() {
 
         if(pChildFrame->m_ImageList.size() > 0)
             return pChildFrame->m_ImageList[pChildFrame->m_ImageList.size()-1];
+
+        return CKcImage();
+    }
+    else if (nCurrentGrabImageNum >= pChildFrame->m_ImageList.size()) {
+
+        if (pChildFrame->m_ImageList.size() > 0)
+            return pChildFrame->m_ImageList[pChildFrame->m_ImageList.size() - 1];
 
         return CKcImage();
     }

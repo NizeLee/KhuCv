@@ -41,10 +41,12 @@ public:
 	char m_VideoFileName[256];
 
 	void OnSelFileFolder(wxCommandEvent& event);
+	void OnActivatedFileListCtrl(wxListEvent& event);
 	void OnTimer(wxTimerEvent& event);
 	void OnRun(wxCommandEvent& event);
 	void OnPause(wxCommandEvent& event);
 	void OnExample(wxCommandEvent& event);
+
 
 	DECLARE_EVENT_TABLE();
 };

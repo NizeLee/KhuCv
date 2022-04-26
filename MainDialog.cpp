@@ -20,6 +20,7 @@
 
 BEGIN_EVENT_TABLE(CMainDialog, wxDialog)
 EVT_BUTTON(IDC_SEL_FILE_FOLDER, CMainDialog::OnSelFileFolder)
+EVT_LIST_ITEM_ACTIVATED(IDC_FILE_LIST_CTRL, CMainDialog::OnActivatedFileListCtrl)
 EVT_BUTTON(IDC_RUN, CMainDialog::OnRun)
 EVT_BUTTON(IDC_PAUSE, CMainDialog::OnPause)
 EVT_BUTTON(IDC_EXAMPLE, CMainDialog::OnExample)
@@ -36,11 +37,11 @@ CMainDialog::CMainDialog(wxWindow* parent, wxWindowID id, const wxString& title,
 		m_pHbox[i] = new wxBoxSizer(wxHORIZONTAL);
 
 	m_pSelButton = new wxButton(this, IDC_SEL_FILE_FOLDER, wxT("..."), wxDefaultPosition, wxSize(30, 20));
-	m_pDisplayPathText = new wxStaticText(this, IDC_DISPLAY_PATH, wxT(""), wxDefaultPosition, wxSize(250, 20));
+	m_pDisplayPathText = new wxStaticText(this, IDC_DISPLAY_PATH, wxT(""), wxDefaultPosition, wxSize(250, 20), wxST_NO_AUTORESIZE);
 	m_pFolerCheck = new wxCheckBox(this, IDC_SEL_FILE_FOLDER_CHECK, wxT("File"), wxDefaultPosition, wxSize(70, 20));
 
 	m_pHbox[0]->Add(m_pSelButton, 0);
-	m_pHbox[0]->Add(m_pDisplayPathText, 0, wxLEFT, 5);
+	m_pHbox[0]->Add(m_pDisplayPathText, 1, wxLEFT, 5);
 	m_pHbox[0]->Add(m_pFolerCheck, 1, wxLEFT, 5);
 
 	m_pListCtrl = new wxListCtrl(this, IDC_FILE_LIST_CTRL, wxDefaultPosition, wxSize(320, 150), 
@@ -98,7 +99,7 @@ void CMainDialog::OnSelFileFolder(wxCommandEvent& event) {
 	bool bFileMode = m_pFolerCheck->GetValue();
 	
 	if (!bFileMode) {
-		wxDirDialog dirDialog(this, _("Folder Selection"), "", wxDD_DEFAULT_STYLE, wxDefaultPosition, wxDefaultSize,
+		wxDirDialog dirDialog(this, "Folder Selection", "", wxDD_DEFAULT_STYLE, wxDefaultPosition, wxDefaultSize,
 			wxDirDialogNameStr);
 
 		if (dirDialog.ShowModal() == wxID_CANCEL) return;
@@ -130,8 +131,8 @@ void CMainDialog::OnSelFileFolder(wxCommandEvent& event) {
 		*m_pEndNum << nNum-1;
 	}
 	else {
-		 wxFileDialog openFileDialog(this, _("Open Video file"), "", "",
-			 "Mp4 files (*.mp4)|*.mp4", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+		 wxFileDialog openFileDialog(this, "Open Video file", "", "",
+			 "Mp4 files(*.mp4)|*.mp4|All files(*.*)|*.*", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 		 if (openFileDialog.ShowModal() == wxID_CANCEL) return;
 
@@ -139,21 +140,21 @@ void CMainDialog::OnSelFileFolder(wxCommandEvent& event) {
 
 		 strcpy(m_VideoFileName, openFileDialog.GetPath());
 
-		 cv::VideoCapture vc(m_VideoFileName);
+		 m_VideoProcessingVc.open(m_VideoFileName);
 
-		 if (vc.isOpened()) {
+		 if (m_VideoProcessingVc.isOpened()) {
 			 cv::Mat videoFrame;
 
-			 float videoFPS = vc.get(cv::CAP_PROP_FPS);
-			 int videoWidth = vc.get(cv::CAP_PROP_FRAME_WIDTH);
-			 int videoHeight = vc.get(cv::CAP_PROP_FRAME_HEIGHT);
+			 float videoFPS = m_VideoProcessingVc.get(cv::CAP_PROP_FPS);
+			 int videoWidth = m_VideoProcessingVc.get(cv::CAP_PROP_FRAME_WIDTH);
+			 int videoHeight = m_VideoProcessingVc.get(cv::CAP_PROP_FRAME_HEIGHT);
 
 			 m_pListCtrl->DeleteAllItems();
 
 			 int nNum = 0;
 			 char NumString[100];
 
-			 int nFrameCnt = vc.get(cv::CAP_PROP_FRAME_COUNT);
+			 int nFrameCnt = m_VideoProcessingVc.get(cv::CAP_PROP_FRAME_COUNT);
 			 for (int i = 0; i < nFrameCnt; ++i) {
 				 sprintf(NumString, "%d", nNum++);
 				 int len = m_pListCtrl->GetItemCount();
@@ -164,6 +165,63 @@ void CMainDialog::OnSelFileFolder(wxCommandEvent& event) {
 			 m_pEndNum->Clear();
 			 *m_pEndNum << nFrameCnt - 1;
 		 }
+	}
+}
+
+void CMainDialog::OnActivatedFileListCtrl(wxListEvent& event) {
+	int nSel = m_pListCtrl->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+
+	wxString pathNameLc = m_pListCtrl->GetItemText(nSel, 1);
+	m_pListCtrl->SetItemState(nSel, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+	m_pListCtrl->EnsureVisible(nSel);
+
+	bool bFileMode = m_pFolerCheck->GetValue();
+
+	if (!bFileMode) {
+		char fileName[256];
+		strcpy(fileName, pathNameLc);
+
+		auto start = std::chrono::steady_clock::now();
+
+		cv::Mat image;
+		image = cv::imread(fileName, cv::IMREAD_COLOR);
+
+		CMainFrame* pMainFrame = (CMainFrame*)GetParent();
+		CChildFrame* pChildFrame = (CChildFrame*)(pMainFrame->GetActiveChild());
+
+		if (!image.empty()) {
+
+			if (pChildFrame) {
+				DisplayImage(image, 0, 0, false, false);
+			}
+			else {
+				NewFileOpen("New Image", image);
+			}
+		}
+	}
+	else {
+		if (m_VideoProcessingVc.isOpened()) {
+			cv::Mat videoFrame;
+			
+			m_VideoProcessingVc.set(cv::CAP_PROP_POS_FRAMES, nSel);
+			m_VideoProcessingVc.grab();
+			m_VideoProcessingVc.retrieve(videoFrame);
+			m_VideoProcessingVc.set(cv::CAP_PROP_POS_FRAMES, m_nProcessingNum);
+			m_VideoProcessingVc.grab();
+
+			CMainFrame* pMainFrame = (CMainFrame*)GetParent();
+			CChildFrame* pChildFrame = (CChildFrame*)(pMainFrame->GetActiveChild());
+
+			if (!videoFrame.empty()) {
+
+				if (pChildFrame) {
+					DisplayImage(videoFrame, 0, 0, false, false);
+				}
+				else {
+					NewFileOpen("New Image", videoFrame);
+				}
+			}
+		}
 	}
 }
 
@@ -243,18 +301,20 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 
 			m_VideoProcessingVc >> videoFrame;
 
+			if (videoFrame.empty()) {
+				m_bRunTimer = false;
+				m_pRunButton->SetLabelText("Run");
+				m_SequenceRunTimer.Stop();
+				m_nProcessingNum++;
+
+				return;
+			}
+
 			cv::Mat output;
 			cv::Sobel(videoFrame, output, -1, 1, 1);
 
 			auto end = std::chrono::steady_clock::now();
 			double processingTime = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()) / 1000;
-
-			if (videoFrame.empty()) {
-				m_bRunTimer = false;
-				m_pRunButton->SetLabelText("Run");
-				m_SequenceRunTimer.Stop();
-				return;
-			}
 
 			CMainFrame* pMainFrame = (CMainFrame*)GetParent();
 			CChildFrame* pChildFrame = (CChildFrame*)(pMainFrame->GetActiveChild());
@@ -304,12 +364,16 @@ void CMainDialog::OnRun(wxCommandEvent& event) {
 	else {
 		if (!m_bRunTimer) {
 			int nStart = 0;
-			//			m_pStartNum->GetLineText(0).ToInt(&nStart, 0);
-			//			if (nStart < 0) nStart = 0;
-			//			if (nStart >= m_pListCtrl->GetItemCount()) nStart = m_pListCtrl->GetItemCount() - 1;
-			m_nProcessingNum = nStart;
-			m_VideoProcessingVc.open(m_VideoFileName);
+			m_pStartNum->GetLineText(0).ToInt(&nStart, 10);
+			if (nStart < 0) nStart = 0;
+			if (nStart >= m_pListCtrl->GetItemCount()) nStart = m_pListCtrl->GetItemCount() - 1;
+
 			if (m_VideoProcessingVc.isOpened()) {
+				m_VideoProcessingVc.set(cv::CAP_PROP_POS_FRAMES, nStart);
+				m_VideoProcessingVc.grab();
+
+				m_nProcessingNum = nStart;
+
 				m_bRunTimer = true;
 				m_bRunPause = false;
 

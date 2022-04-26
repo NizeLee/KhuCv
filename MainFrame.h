@@ -42,6 +42,7 @@ public:
     void DlgPrintf(const char* ptr, ...);
  
 private:
+    void OnDropFiles(wxDropFilesEvent&);
     void OnQuit(wxCommandEvent& event);
     void OnFileOpen(wxCommandEvent& event);
     void OnRecentFiles(wxCommandEvent& event);
