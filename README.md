@@ -10,10 +10,11 @@
 * Image sequences and video files
 * **Example**
   + Open mp4 file and Run
-<img src="KhuCv.gif"></img>  
+<br><img src="KhuCv.gif"></img>  
 
 ## Source code
-'''C++
+* Call a method (Run) for image processing
+``` C++
 // MainDialog.cpp
 void CMainDialog::OnTimer(wxTimerEvent& event) {
 	// Timer for sequence processing
@@ -36,9 +37,10 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 
 	...
 }
-'''
+```
 
-'''C++
+* CProject class
+``` C++
 // CProcessing.cpp / h
 class CProject
 {
@@ -64,4 +66,9 @@ void CProject::Run(cv::Mat Input, cv::Mat& Output, bool bVerbose) {
 
 	m_PreviousImage = Input.clone();
 }
-'''
+```
+
+* Showing string information (DlgPrintf function)
+``` C++
+DlgPrintf("%05d: %s, %10.5lfms", m_nProcessingNum, fileName, processingTime);
+```
