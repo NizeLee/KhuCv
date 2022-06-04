@@ -72,11 +72,14 @@ CMainDialog::CMainDialog(wxWindow* parent, wxWindowID id, const wxString& title,
 
 	m_pRunButton = new wxButton(this, IDC_RUN, wxT("Run"), wxDefaultPosition, wxSize(70, 20));
 	m_pPauseButton = new wxButton(this, IDC_PAUSE, wxT("Pause"), wxDefaultPosition, wxSize(70, 20));
-	m_pStepCheck = new wxCheckBox(this, IDC_SEL_STEP_CHECK, wxT("Step"), wxDefaultPosition, wxSize(20, 20));
+	m_pStepCheck = new wxCheckBox(this, IDC_SEL_STEP_CHECK, wxT("Step"), wxDefaultPosition, wxSize(30, 20));
+	m_pVerboseCheck = new wxCheckBox(this, IDC_SEL_VERBOSE_CHECK, wxT("Verbose"), wxDefaultPosition, wxSize(30, 20));
+	m_pVerboseCheck->SetValue(true);
 
 	m_pHbox[4]->Add(m_pRunButton, 1);
 	m_pHbox[4]->Add(m_pPauseButton, 1, wxLEFT, 5);
 	m_pHbox[4]->Add(m_pStepCheck, 1, wxLEFT, 5);
+	m_pHbox[4]->Add(m_pVerboseCheck, 1, wxLEFT, 5);
 
 	m_pExampleButton = new wxButton(this, IDC_EXAMPLE, wxT("Example"), wxDefaultPosition, wxSize(70, 20));
 	m_pHbox[5]->Add(m_pExampleButton, 1);
@@ -253,6 +256,10 @@ void CMainDialog::OnActivatedFileListCtrl(wxListEvent& event) {
 void CMainDialog::OnTimer(wxTimerEvent& event) {
 	if (m_bRunPause) return;
 
+	char fileName[256], frameInfo[256];
+	cv::Mat CurrentImage;
+	bool bLoaded = false;;
+
 	if (event.GetId() == ID_TIMER_SEQUENCE_RUN) {
 		if (m_nProcessingNum >= m_pListCtrl->GetItemCount()) {
 			m_bRunTimer = false;
@@ -265,54 +272,30 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 		m_pListCtrl->SetItemState(m_nProcessingNum, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
 		m_pListCtrl->EnsureVisible(m_nProcessingNum);
 
-		char fileName[256];
 		strcpy(fileName, pathNameLc);
 
-		auto start = std::chrono::steady_clock::now();
-	
-		cv::Mat image;
-		image = cv::imread(fileName, cv::IMREAD_COLOR);
+		CurrentImage = cv::imread(fileName, cv::IMREAD_COLOR);
 
-		cv::Mat output;
-		cv::Sobel(image, output, -1, 1, 1);
-	
-		auto end = std::chrono::steady_clock::now();
-		double processingTime = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()) / 1000;
-	
-		CMainFrame* pMainFrame = (CMainFrame*)GetParent();
-		CChildFrame* pChildFrame = (CChildFrame*)(pMainFrame->GetActiveChild());
+		if (CurrentImage.empty()) {
+			//m_bRunTimer = false;
+			//m_pRunButton->SetLabelText("Run");
+			//m_SequenceRunTimer.Stop();
+			m_nProcessingNum++;
 
-		if (!image.empty()) {
-			
-			if (pChildFrame) {
-				DisplayImage(image, 0, 0, false, m_pClearImagesCheck->GetValue());
-				DisplayImage(output, image.cols, 0, false, false);
-			}
-			else {
-				NewFileOpen("New Image", image);
-				DisplayImage(output, image.cols, 0, false, false);
-			}
-
-			pMainFrame->DlgPrintf("%05d: %s, %10.5lfms", m_nProcessingNum, fileName, processingTime);
-		}
-		else
-		{
-			pMainFrame->DlgPrintf("%05d: %s - load error", m_nProcessingNum, fileName);
+			return;
 		}
 
-		m_nProcessingNum++;
+		bLoaded = true;
 	}
 	else if (event.GetId() == ID_TIMER_VIDEO_RUN) {
 		if (m_nProcessingNum >= m_pListCtrl->GetItemCount()) {
 			m_bRunTimer = false;
 			m_pRunButton->SetLabelText("Run");
-			m_SequenceRunTimer.Stop();
+			m_VideoRunTimer.Stop();
 			return;
 		}
 
 		if (m_VideoProcessingVc.isOpened()) {
-			cv::Mat videoFrame;
-
 			float videoFPS = m_VideoProcessingVc.get(cv::CAP_PROP_FPS);
 			int videoWidth = m_VideoProcessingVc.get(cv::CAP_PROP_FRAME_WIDTH);
 			int videoHeight = m_VideoProcessingVc.get(cv::CAP_PROP_FRAME_HEIGHT);
@@ -321,20 +304,19 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 
 			m_pListCtrl->SetItemState(m_nProcessingNum, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
 			m_pListCtrl->EnsureVisible(m_nProcessingNum);
-			
-			auto start = std::chrono::steady_clock::now();
 
-			m_VideoProcessingVc >> videoFrame;
+			m_VideoProcessingVc >> CurrentImage;
 
-			if (videoFrame.empty()) {
-				m_bRunTimer = false;
-				m_pRunButton->SetLabelText("Run");
-				m_SequenceRunTimer.Stop();
+			sprintf(frameInfo, "Video frame: %5.3lf", m_nProcessingNum/videoFPS);
+
+			if (CurrentImage.empty()) {
+				//m_bRunTimer = false;
+				//m_pRunButton->SetLabelText("Run");
+				//m_VideoRunTimer.Stop();
 				m_nProcessingNum++;
 
 				return;
 			}
-
 
 			if (m_pSaveFrameCheck->GetValue()) {
 				char SaveFileName[256];
@@ -343,30 +325,57 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 				strcpy(FolderName, m_pDisplayDesPathText->GetLabelText());
 
 				sprintf(SaveFileName, "%s/frame%05d.jpg", FolderName, m_nProcessingNum);
-				cv::imwrite(SaveFileName, videoFrame);
+				cv::imwrite(SaveFileName, CurrentImage);
 			}
 
-			cv::Mat output;
-			cv::Sobel(videoFrame, output, -1, 1, 1);
+			bLoaded = true;
+		}
+	}
 
-			auto end = std::chrono::steady_clock::now();
-			double processingTime = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()) / 1000;
+	if(bLoaded) {
+		auto start = std::chrono::steady_clock::now();
 
-			CMainFrame* pMainFrame = (CMainFrame*)GetParent();
-			CChildFrame* pChildFrame = (CChildFrame*)(pMainFrame->GetActiveChild());
+		
+		cv::Mat Output;
+		
+		// Project Run;
+		m_Project.Run(CurrentImage, Output, m_pVerboseCheck->GetValue());
+
+		auto end = std::chrono::steady_clock::now();
+		double processingTime = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()) / 1000;
+
+		CMainFrame* pMainFrame = (CMainFrame*)GetParent();
+		CChildFrame* pChildFrame = (CChildFrame*)(pMainFrame->GetActiveChild());
+
+		if (!CurrentImage.empty()) {
+
 			if (pChildFrame) {
-				DisplayImage(videoFrame, 0, 0, false, m_pClearImagesCheck->GetValue());
-				DisplayImage(output, videoFrame.cols, 0, false, false);
+				DisplayImage(CurrentImage, 0, 0, false, m_pClearImagesCheck->GetValue());
 			}
 			else {
-				NewFileOpen("New Image", videoFrame);
-				DisplayImage(output, videoFrame.cols, 0, false, false);
+				NewFileOpen("New Image", CurrentImage);
 			}
-
-			pMainFrame->DlgPrintf("%05d: %s, %10.5lfms", m_nProcessingNum, "Video frame", processingTime);
-
-			m_nProcessingNum++;
+			
+			if (!Output.empty()) DisplayImage(Output, CurrentImage.cols, 0, false, false);
+			
+			if (event.GetId() == ID_TIMER_SEQUENCE_RUN) {
+				pMainFrame->DlgPrintf("%05d: %s, %10.5lfms", m_nProcessingNum, fileName, processingTime);
+			}
+			else if (event.GetId() == ID_TIMER_VIDEO_RUN) {
+				pMainFrame->DlgPrintf("%05d: %s, %10.5lfms", m_nProcessingNum, frameInfo, processingTime);
+			}
 		}
+		else
+		{
+			if (event.GetId() == ID_TIMER_SEQUENCE_RUN) {
+				pMainFrame->DlgPrintf("%05d: %s - load error", m_nProcessingNum, fileName);
+			}
+			else if (event.GetId() == ID_TIMER_VIDEO_RUN) {
+				pMainFrame->DlgPrintf("%05d: %s - load error", m_nProcessingNum, frameInfo);
+			}
+		}
+
+		m_nProcessingNum++;
 	}
 
 	if (m_pStepCheck->GetValue()) m_bRunPause = true;

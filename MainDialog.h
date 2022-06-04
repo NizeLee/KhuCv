@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include "Project.h"
+
 #define H_BOX_SIZER_NUM	6
 
 class CMainDialog : public wxDialog
@@ -33,6 +35,7 @@ public:
 	wxButton* m_pRunButton;
 	wxButton* m_pPauseButton;
 	wxCheckBox* m_pStepCheck;
+	wxCheckBox* m_pVerboseCheck;
 	
 	wxButton* m_pExampleButton;
 
@@ -43,6 +46,8 @@ public:
 	wxTimer m_VideoRunTimer;
 	cv::VideoCapture m_VideoProcessingVc;
 	char m_VideoFileName[256];
+
+	CProject m_Project;
 
 	void OnSelSrcFileFolder(wxCommandEvent& event);
 	void OnSelDesFileFolder(wxCommandEvent& event);
