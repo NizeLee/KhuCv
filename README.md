@@ -1,12 +1,16 @@
 # KhuCv
 * KhuCv: Open development source for computer vision  (Kyung Hee University, Data Analysis & Vision Intelligence)
-* C++ (wxWidgets + openCV)
+* C++ (wxWidgets + OpenCV)
 
 ## Introduction
 * Open program sources
 * wxWidgets 3.x + OpenCV 4.x
+* File open by OpenCV
+* File save by OpenCV (individual image)
+* Images can be displayed any position and can be moved by mouse
+* Sequence processing (image/video files)
 
-## Sequency processing
+## Sequence processing
 * Image sequences and video files
 * **Example**
   + Open mp4 file and Run
@@ -59,16 +63,21 @@ void CProject::Run(cv::Mat Input, cv::Mat& Output, bool bVerbose) {
 	cv::Mat Difference;
 
 	if (!m_PreviousImage.empty()) {
-		cv::subtract(Input, m_PreviousImage, Difference);
 
-		if(bVerbose) DisplayImage(Difference, 0, Input.rows, false, false);
+		if (Input.type() == m_PreviousImage.type() &&
+			Input.cols == m_PreviousImage.cols &&
+			Input.rows == m_PreviousImage.rows) {
+			cv::subtract(Input, m_PreviousImage, Difference);
+
+			if (bVerbose) DisplayImage(Difference, 0, Input.rows, false, false);
+		}
 	}
 
 	m_PreviousImage = Input.clone();
 }
 ```
 
-* Showing string information (DlgPrintf function)
+* Showing string information (DlgPrintf function) - lower output window
 ``` C++
 DlgPrintf("%05d: %s, %10.5lfms", m_nProcessingNum, fileName, processingTime);
 ```
