@@ -15,9 +15,14 @@ void CProject::Run(cv::Mat Input, cv::Mat& Output, bool bVerbose) {
 	cv::Mat Difference;
 
 	if (!m_PreviousImage.empty()) {
-		cv::subtract(Input, m_PreviousImage, Difference);
 
-		if(bVerbose) DisplayImage(Difference, 0, Input.rows, false, false);
+		if (Input.type() == m_PreviousImage.type() &&
+			Input.cols == m_PreviousImage.cols &&
+			Input.rows == m_PreviousImage.rows) {
+			cv::subtract(Input, m_PreviousImage, Difference);
+
+			if (bVerbose) DisplayImage(Difference, 0, Input.rows, false, false);
+		}
 	}
 
 	m_PreviousImage = Input.clone();

@@ -19,6 +19,7 @@ BEGIN_EVENT_TABLE(CMainFrame, wxMDIParentFrame)
 EVT_DROP_FILES(CMainFrame::OnDropFiles)
 EVT_MENU(ID_QUIT, CMainFrame::OnQuit)
 EVT_MENU(IDM_OPEN, CMainFrame::OnFileOpen)
+EVT_MENU(IDM_SAVE, CMainFrame::OnFileSave)
 EVT_MENU_RANGE(wxID_FILE1, wxID_FILE9, CMainFrame::OnRecentFiles)
 EVT_MENU(IDM_ABOUT, CMainFrame::OnAbout)
 EVT_CLOSE(CMainFrame::OnClose)
@@ -36,6 +37,7 @@ CMainFrame::CMainFrame(const wxString& title)
     wxMenu* menuFile = new wxMenu;
     wxMenu* menuRecent = new wxMenu;
     menuFile->Append(IDM_OPEN, "&Open File...\tCtrl+O");
+    menuFile->Append(IDM_SAVE, "&Open Save...\tCtrl+S");
     menuFile->AppendSubMenu(menuRecent, "Open Recent");
     menuFile->AppendSeparator();
     menuFile->Append(ID_QUIT, "&Quit");
@@ -131,6 +133,21 @@ void CMainFrame::OnFileOpen(wxCommandEvent& event)
 
         m_pFileHistory->AddFileToHistory(filePath);
     }
+}
+
+void CMainFrame::OnFileSave(wxCommandEvent& event)
+{
+    wxFileDialog openFileDialog(this, "Open Image file", "", "",
+        "Jpeg files (*.jpg)|*.jpg|Bmp files(*.bmp)|*.bmp|Gif files(*.gif)|*.gif|All files(*.*)|*.*", wxFD_SAVE | wxFD_FILE_MUST_EXIST);
+    if (openFileDialog.ShowModal() == wxID_CANCEL) return;
+
+    char filePath[256];
+    strcpy(filePath, openFileDialog.GetPath());
+    
+    CKcImage kcImage = GetLastSelImage();
+    if (kcImage.cvImage.empty()) return;
+    
+    cv::imwrite(filePath, kcImage.cvImage);
 }
 
 void CMainFrame::OnRecentFiles(wxCommandEvent & event) {

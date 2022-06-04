@@ -333,17 +333,6 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 	}
 
 	if(bLoaded) {
-		auto start = std::chrono::steady_clock::now();
-
-		
-		cv::Mat Output;
-		
-		// Project Run;
-		m_Project.Run(CurrentImage, Output, m_pVerboseCheck->GetValue());
-
-		auto end = std::chrono::steady_clock::now();
-		double processingTime = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()) / 1000;
-
 		CMainFrame* pMainFrame = (CMainFrame*)GetParent();
 		CChildFrame* pChildFrame = (CChildFrame*)(pMainFrame->GetActiveChild());
 
@@ -355,7 +344,18 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 			else {
 				NewFileOpen("New Image", CurrentImage);
 			}
-			
+		}
+
+		auto start = std::chrono::steady_clock::now();
+		cv::Mat Output;
+		
+		// Project Run;
+		m_Project.Run(CurrentImage, Output, m_pVerboseCheck->GetValue());
+
+		auto end = std::chrono::steady_clock::now();
+		double processingTime = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()) / 1000;
+
+		if (!CurrentImage.empty()) {
 			if (!Output.empty()) DisplayImage(Output, CurrentImage.cols, 0, false, false);
 			
 			if (event.GetId() == ID_TIMER_SEQUENCE_RUN) {

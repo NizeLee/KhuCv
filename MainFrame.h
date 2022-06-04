@@ -9,6 +9,7 @@ enum
 {
     ID_QUIT = 1,
     IDM_OPEN,
+    IDM_SAVE,
     IDM_FILE_OPEN_RECENT,
     IDM_VIWE_MAIN_DLG,
     IDM_VIWE_OUTPUT_WND,
@@ -51,6 +52,7 @@ private:
     void OnDropFiles(wxDropFilesEvent&);
     void OnQuit(wxCommandEvent& event);
     void OnFileOpen(wxCommandEvent& event);
+    void OnFileSave(wxCommandEvent& event);
     void OnRecentFiles(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
     void OnClose(wxCloseEvent& event);
