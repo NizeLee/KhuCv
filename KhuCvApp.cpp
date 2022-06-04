@@ -96,3 +96,20 @@ CKcImage GetLastSelImage() {
 CMainDialog* GetMainDialog() {
     return wxGetApp().m_pMainDialog;
 }
+
+void DlgPrintf(const char* ptr, ...) {
+    unsigned int Num;
+
+    char ach[1024];
+    va_list args;
+    va_start(args, ptr);
+    vsnprintf(ach, 1024, ptr, args);
+
+    wxString msg = ach;
+    
+    CMainFrame* pMainFrame = wxGetApp().m_pMainFrame;
+
+    Num = pMainFrame->GetPrintListBox()->GetCount();
+    pMainFrame->GetPrintListBox()->InsertItems(1, &msg, Num);
+    pMainFrame->GetPrintListBox()->SetSelection(Num);
+}

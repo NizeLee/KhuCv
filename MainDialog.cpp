@@ -359,19 +359,19 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 			if (!Output.empty()) DisplayImage(Output, CurrentImage.cols, 0, false, false);
 			
 			if (event.GetId() == ID_TIMER_SEQUENCE_RUN) {
-				pMainFrame->DlgPrintf("%05d: %s, %10.5lfms", m_nProcessingNum, fileName, processingTime);
+				DlgPrintf("%05d: %s, %10.5lfms", m_nProcessingNum, fileName, processingTime);
 			}
 			else if (event.GetId() == ID_TIMER_VIDEO_RUN) {
-				pMainFrame->DlgPrintf("%05d: %s, %10.5lfms", m_nProcessingNum, frameInfo, processingTime);
+				DlgPrintf("%05d: %s, %10.5lfms", m_nProcessingNum, frameInfo, processingTime);
 			}
 		}
 		else
 		{
 			if (event.GetId() == ID_TIMER_SEQUENCE_RUN) {
-				pMainFrame->DlgPrintf("%05d: %s - load error", m_nProcessingNum, fileName);
+				DlgPrintf("%05d: %s - load error", m_nProcessingNum, fileName);
 			}
 			else if (event.GetId() == ID_TIMER_VIDEO_RUN) {
-				pMainFrame->DlgPrintf("%05d: %s - load error", m_nProcessingNum, frameInfo);
+				DlgPrintf("%05d: %s - load error", m_nProcessingNum, frameInfo);
 			}
 		}
 

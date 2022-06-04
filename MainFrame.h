@@ -45,7 +45,7 @@ public:
     CMainFrame(const wxString& title);
     ~CMainFrame();
 
-    void DlgPrintf(const char* ptr, ...);
+    wxListBox* GetPrintListBox() const;
  
 private:
     void OnDropFiles(wxDropFilesEvent&);

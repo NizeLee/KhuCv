@@ -75,6 +75,10 @@ CMainFrame::~CMainFrame() {
     m_AuiMgrOutputWnd.UnInit();
 }
 
+wxListBox* CMainFrame::GetPrintListBox() const {
+    return m_pPrintListBox;
+}
+
 void CMainFrame::OnDropFiles(wxDropFilesEvent& event) {
     const wxString* files = event.GetFiles();
 
@@ -168,20 +172,5 @@ void CMainFrame::OnMenuCheckViewOutputWnd(wxCommandEvent& event) {
 
     Pane.Show(!Pane.IsShown());
     m_AuiMgrOutputWnd.Update();
-}
-
-void CMainFrame::DlgPrintf(const char* ptr, ...) {
-    unsigned int Num;
-
-    char ach[1024];
-    va_list args;
-    va_start(args, ptr);
-    vsnprintf(ach, 1024, ptr, args);
-
-    wxString msg = ach;
-
-    Num = m_pPrintListBox->GetCount();
-    m_pPrintListBox->InsertItems(1, &msg, Num);
-    m_pPrintListBox->SetSelection(Num);
 }
 
