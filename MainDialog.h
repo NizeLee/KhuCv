@@ -5,7 +5,7 @@
 
 #pragma once
 
-#define H_BOX_SIZER_NUM	5
+#define H_BOX_SIZER_NUM	6
 
 class CMainDialog : public wxDialog
 {
@@ -16,9 +16,13 @@ public:
 	wxBoxSizer* m_pVbox = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer* m_pHbox[H_BOX_SIZER_NUM];
 
-	wxButton* m_pSelButton;
-	wxCheckBox* m_pFolerCheck;
-	wxStaticText* m_pDisplayPathText;
+	wxButton* m_pSrcFolderSelButton;
+	wxCheckBox* m_pVideoFileCheck;
+	wxStaticText* m_pDisplaySrcPathText;
+
+	wxButton* m_pDesFolderSelButton;
+	wxCheckBox* m_pSaveFrameCheck;
+	wxStaticText* m_pDisplayDesPathText;
 
 	wxListCtrl* m_pListCtrl;
 
@@ -40,7 +44,8 @@ public:
 	cv::VideoCapture m_VideoProcessingVc;
 	char m_VideoFileName[256];
 
-	void OnSelFileFolder(wxCommandEvent& event);
+	void OnSelSrcFileFolder(wxCommandEvent& event);
+	void OnSelDesFileFolder(wxCommandEvent& event);
 	void OnActivatedFileListCtrl(wxListEvent& event);
 	void OnTimer(wxTimerEvent& event);
 	void OnRun(wxCommandEvent& event);

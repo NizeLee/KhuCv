@@ -92,3 +92,7 @@ CKcImage GetLastSelImage() {
 
     return pChildFrame->m_ImageList[nCurrentGrabImageNum];
 }
+
+CMainDialog* GetMainDialog() {
+    return wxGetApp().m_pMainDialog;
+}

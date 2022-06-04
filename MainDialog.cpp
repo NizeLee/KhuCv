@@ -19,7 +19,8 @@
 #endif
 
 BEGIN_EVENT_TABLE(CMainDialog, wxDialog)
-EVT_BUTTON(IDC_SEL_FILE_FOLDER, CMainDialog::OnSelFileFolder)
+EVT_BUTTON(IDC_SEL_FILE_FOLDER, CMainDialog::OnSelSrcFileFolder)
+EVT_BUTTON(IDC_SEL_DES_FOLDER, CMainDialog::OnSelDesFileFolder)
 EVT_LIST_ITEM_ACTIVATED(IDC_FILE_LIST_CTRL, CMainDialog::OnActivatedFileListCtrl)
 EVT_BUTTON(IDC_RUN, CMainDialog::OnRun)
 EVT_BUTTON(IDC_PAUSE, CMainDialog::OnPause)
@@ -36,46 +37,56 @@ CMainDialog::CMainDialog(wxWindow* parent, wxWindowID id, const wxString& title,
 	for(int i = 0 ;i < H_BOX_SIZER_NUM; ++i)
 		m_pHbox[i] = new wxBoxSizer(wxHORIZONTAL);
 
-	m_pSelButton = new wxButton(this, IDC_SEL_FILE_FOLDER, wxT("..."), wxDefaultPosition, wxSize(30, 20));
-	m_pDisplayPathText = new wxStaticText(this, IDC_DISPLAY_PATH, wxT(""), wxDefaultPosition, wxSize(250, 20), wxST_NO_AUTORESIZE);
-	m_pFolerCheck = new wxCheckBox(this, IDC_SEL_FILE_FOLDER_CHECK, wxT("File"), wxDefaultPosition, wxSize(70, 20));
+	m_pSrcFolderSelButton = new wxButton(this, IDC_SEL_FILE_FOLDER, wxT("..."), wxDefaultPosition, wxSize(30, 20));
+	m_pDisplaySrcPathText = new wxStaticText(this, IDC_DISPLAY_SRC_PATH, wxT(""), wxDefaultPosition, wxSize(200, 20), wxST_NO_AUTORESIZE);
+	m_pVideoFileCheck = new wxCheckBox(this, IDC_VIDEO_FILE_CHECK, wxT("Video file"), wxDefaultPosition, wxSize(70, 20));
 
-	m_pHbox[0]->Add(m_pSelButton, 0);
-	m_pHbox[0]->Add(m_pDisplayPathText, 1, wxLEFT, 5);
-	m_pHbox[0]->Add(m_pFolerCheck, 1, wxLEFT, 5);
+	m_pHbox[0]->Add(m_pSrcFolderSelButton, 0);
+	m_pHbox[0]->Add(m_pDisplaySrcPathText, 1, wxLEFT, 5);
+	m_pHbox[0]->Add(m_pVideoFileCheck, 1, wxLEFT, 5);
+
+	m_pDesFolderSelButton = new wxButton(this, IDC_SEL_DES_FOLDER, wxT("..."), wxDefaultPosition, wxSize(30, 20));
+	m_pDisplayDesPathText = new wxStaticText(this, IDC_DISPLAY_DES_PATH, wxT(""), wxDefaultPosition, wxSize(200, 20), wxST_NO_AUTORESIZE);
+	m_pSaveFrameCheck = new wxCheckBox(this, IDC_SAVE_FRAME_CHECK, wxT("Frame save"), wxDefaultPosition, wxSize(70, 20));
+
+	m_pHbox[1]->Add(m_pDesFolderSelButton, 0);
+	m_pHbox[1]->Add(m_pDisplayDesPathText, 1, wxLEFT, 5);
+	m_pHbox[1]->Add(m_pSaveFrameCheck, 1, wxLEFT, 5);
+
 
 	m_pListCtrl = new wxListCtrl(this, IDC_FILE_LIST_CTRL, wxDefaultPosition, wxSize(320, 150), 
 		wxLC_REPORT | wxLC_SINGLE_SEL | wxSUNKEN_BORDER);
 	long indx1 = m_pListCtrl->InsertColumn(0, "Num", wxLIST_FORMAT_LEFT, 50);
 	long indx2 = m_pListCtrl->InsertColumn(1, "File name", wxLIST_FORMAT_LEFT, 270);
 
-	m_pHbox[1]->Add(m_pListCtrl, 1);
+	m_pHbox[2]->Add(m_pListCtrl, 1);
 
 	m_pStartNum = new wxTextCtrl(this, IDC_START_NUM, wxT(" "), wxDefaultPosition, wxSize(70, 20), wxTE_RIGHT);
 	m_pEndNum = new wxTextCtrl(this, IDC_END_NUM, wxT(" "), wxDefaultPosition, wxSize(70, 20), wxTE_RIGHT);
 	m_pClearImagesCheck = new wxCheckBox(this, IDC_CLEAR_IMAGES_CHECK, wxT("Clear images"), wxDefaultPosition, wxSize(100, 20));
 	m_pClearImagesCheck->SetValue(true);
 
-	m_pHbox[2]->Add(m_pStartNum, 1);
-	m_pHbox[2]->Add(m_pEndNum, 1, wxLEFT, 5);
-	m_pHbox[2]->Add(m_pClearImagesCheck, 0, wxLEFT, 5);
+	m_pHbox[3]->Add(m_pStartNum, 1);
+	m_pHbox[3]->Add(m_pEndNum, 1, wxLEFT, 5);
+	m_pHbox[3]->Add(m_pClearImagesCheck, 0, wxLEFT, 5);
 
 	m_pRunButton = new wxButton(this, IDC_RUN, wxT("Run"), wxDefaultPosition, wxSize(70, 20));
 	m_pPauseButton = new wxButton(this, IDC_PAUSE, wxT("Pause"), wxDefaultPosition, wxSize(70, 20));
 	m_pStepCheck = new wxCheckBox(this, IDC_SEL_STEP_CHECK, wxT("Step"), wxDefaultPosition, wxSize(20, 20));
 
-	m_pHbox[3]->Add(m_pRunButton, 1);
-	m_pHbox[3]->Add(m_pPauseButton, 1, wxLEFT, 5);
-	m_pHbox[3]->Add(m_pStepCheck, 1, wxLEFT, 5);
+	m_pHbox[4]->Add(m_pRunButton, 1);
+	m_pHbox[4]->Add(m_pPauseButton, 1, wxLEFT, 5);
+	m_pHbox[4]->Add(m_pStepCheck, 1, wxLEFT, 5);
 
 	m_pExampleButton = new wxButton(this, IDC_EXAMPLE, wxT("Example"), wxDefaultPosition, wxSize(70, 20));
-	m_pHbox[4]->Add(m_pExampleButton, 1);
+	m_pHbox[5]->Add(m_pExampleButton, 1);
 
 	m_pVbox->Add(m_pHbox[0], 1, wxALIGN_CENTER | wxTOP, 5);
 	m_pVbox->Add(m_pHbox[1], 1, wxALIGN_CENTER | wxTOP, 5);
 	m_pVbox->Add(m_pHbox[2], 1, wxALIGN_CENTER | wxTOP, 5);
 	m_pVbox->Add(m_pHbox[3], 1, wxALIGN_CENTER | wxTOP, 5);
 	m_pVbox->Add(m_pHbox[4], 1, wxALIGN_CENTER | wxTOP, 5);
+	m_pVbox->Add(m_pHbox[5], 1, wxALIGN_CENTER | wxTOP, 5);
 
 	SetSizer(m_pVbox);
 
@@ -87,7 +98,7 @@ CMainDialog::~CMainDialog() {
 	
 }
 
-void CMainDialog::OnSelFileFolder(wxCommandEvent& event) {
+void CMainDialog::OnSelSrcFileFolder(wxCommandEvent& event) {
 	if (m_bRunTimer) {
 		wxMessageBox("Timer is running!!");
 		return;
@@ -96,7 +107,7 @@ void CMainDialog::OnSelFileFolder(wxCommandEvent& event) {
 	m_pStartNum->Clear();
 	*m_pStartNum << 0;
 
-	bool bFileMode = m_pFolerCheck->GetValue();
+	bool bFileMode = m_pVideoFileCheck->GetValue();
 	
 	if (!bFileMode) {
 		wxDirDialog dirDialog(this, "Folder Selection", "", wxDD_DEFAULT_STYLE, wxDefaultPosition, wxDefaultSize,
@@ -106,7 +117,7 @@ void CMainDialog::OnSelFileFolder(wxCommandEvent& event) {
 
 		m_pListCtrl->DeleteAllItems();
 
-		m_pDisplayPathText->SetLabelText(dirDialog.GetPath());
+		m_pDisplaySrcPathText->SetLabelText(dirDialog.GetPath());
 
 		wxDir dir(dirDialog.GetPath());
 
@@ -136,7 +147,7 @@ void CMainDialog::OnSelFileFolder(wxCommandEvent& event) {
 
 		 if (openFileDialog.ShowModal() == wxID_CANCEL) return;
 
-		 m_pDisplayPathText->SetLabelText(openFileDialog.GetPath());
+		 m_pDisplaySrcPathText->SetLabelText(openFileDialog.GetPath());
 
 		 strcpy(m_VideoFileName, openFileDialog.GetPath());
 
@@ -168,6 +179,20 @@ void CMainDialog::OnSelFileFolder(wxCommandEvent& event) {
 	}
 }
 
+void CMainDialog::OnSelDesFileFolder(wxCommandEvent& event) {
+	if (m_bRunTimer) {
+		wxMessageBox("Timer is running!!");
+		return;
+	}
+
+	wxDirDialog dirDialog(this, "Folder Selection", "", wxDD_DEFAULT_STYLE, wxDefaultPosition, wxDefaultSize,
+		wxDirDialogNameStr);
+
+	if (dirDialog.ShowModal() == wxID_CANCEL) return;
+
+	m_pDisplayDesPathText->SetLabelText(dirDialog.GetPath());
+}
+
 void CMainDialog::OnActivatedFileListCtrl(wxListEvent& event) {
 	int nSel = m_pListCtrl->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
 
@@ -175,7 +200,7 @@ void CMainDialog::OnActivatedFileListCtrl(wxListEvent& event) {
 	m_pListCtrl->SetItemState(nSel, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
 	m_pListCtrl->EnsureVisible(nSel);
 
-	bool bFileMode = m_pFolerCheck->GetValue();
+	bool bFileMode = m_pVideoFileCheck->GetValue();
 
 	if (!bFileMode) {
 		char fileName[256];
@@ -310,6 +335,17 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 				return;
 			}
 
+
+			if (m_pSaveFrameCheck->GetValue()) {
+				char SaveFileName[256];
+
+				char FolderName[256];
+				strcpy(FolderName, m_pDisplayDesPathText->GetLabelText());
+
+				sprintf(SaveFileName, "%s/frame%05d.jpg", FolderName, m_nProcessingNum);
+				cv::imwrite(SaveFileName, videoFrame);
+			}
+
 			cv::Mat output;
 			cv::Sobel(videoFrame, output, -1, 1, 1);
 
@@ -341,7 +377,7 @@ void CMainDialog::OnPause(wxCommandEvent& event) {
 }
 
 void CMainDialog::OnRun(wxCommandEvent& event) {
-	bool bFileMode = m_pFolerCheck->GetValue();
+	bool bFileMode = m_pVideoFileCheck->GetValue();
 	
 	if (!bFileMode) {
 		if (!m_bRunTimer && m_pListCtrl->GetItemCount() > 0) {
@@ -397,8 +433,6 @@ void CMainDialog::OnExample(wxCommandEvent& event) {
 
 	cv::Mat img_gray;
 	cv::cvtColor(cvImage, img_gray, cv::COLOR_BGR2GRAY);
-
-	cvImage.type();
 
 	cv::Mat img_threshold;
 	threshold(img_gray, img_threshold, 0, 255, cv::THRESH_BINARY + cv::THRESH_OTSU);

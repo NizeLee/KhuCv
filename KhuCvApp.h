@@ -35,3 +35,4 @@ public:
 void NewFileOpen(const char* fileName, cv::Mat cvImage, int nPosX=0, int nPosY=0);
 void DisplayImage(cv::Mat cvImage, int nPosX, int nPosY, bool bErase, bool bClearAll);
 CKcImage GetLastSelImage();
+CMainDialog* GetMainDialog();

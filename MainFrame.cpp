@@ -22,6 +22,10 @@ EVT_MENU(IDM_OPEN, CMainFrame::OnFileOpen)
 EVT_MENU_RANGE(wxID_FILE1, wxID_FILE9, CMainFrame::OnRecentFiles)
 EVT_MENU(IDM_ABOUT, CMainFrame::OnAbout)
 EVT_CLOSE(CMainFrame::OnClose)
+EVT_UPDATE_UI(IDM_VIWE_MAIN_DLG, CMainFrame::OnUpdateMenuCheckViewMainDlg)
+EVT_MENU(IDM_VIWE_MAIN_DLG, CMainFrame::OnMenuCheckViewMainDlg)
+EVT_UPDATE_UI(IDM_VIWE_OUTPUT_WND, CMainFrame::OnUpdateMenuCheckViewOutputWnd)
+EVT_MENU(IDM_VIWE_OUTPUT_WND, CMainFrame::OnMenuCheckViewOutputWnd)
 END_EVENT_TABLE()
 
 CMainFrame::CMainFrame(const wxString& title)
@@ -36,12 +40,17 @@ CMainFrame::CMainFrame(const wxString& title)
     menuFile->AppendSeparator();
     menuFile->Append(ID_QUIT, "&Quit");
 
-    wxMenu* menuFile2 = new wxMenu;
-    menuFile2->Append(IDM_ABOUT, "&KhuCv App...");
+    wxMenu* menuView = new wxMenu;
+    menuView->AppendCheckItem(IDM_VIWE_MAIN_DLG, "&Main Dlg");
+    menuView->AppendCheckItem(IDM_VIWE_OUTPUT_WND, "&Output");
+
+    wxMenu* menuHelp = new wxMenu;
+    menuHelp->Append(IDM_ABOUT, "&KhuCv App...");
   
     wxMenuBar* menuBar = new wxMenuBar;
     menuBar->Append(menuFile, "&File");
-    menuBar->Append(menuFile2, "&Help");
+    menuBar->Append(menuView, "&View");
+    menuBar->Append(menuHelp, "&Help");
 
     SetMenuBar(menuBar);
 
@@ -51,12 +60,11 @@ CMainFrame::CMainFrame(const wxString& title)
     m_pFileHistory->AddFilesToMenu(menuRecent);
     m_pFileHistory->Load(*m_pConfig);
     
-    m_AuiMgr.SetManagedWindow(this);
-
+    m_AuiMgrOutputWnd.SetManagedWindow(this);
+ 
     m_pPrintListBox = new wxListBox(this, IDC_PRINT_LIST, wxDefaultPosition, wxSize(1920, 150));
-    m_AuiMgr.AddPane(m_pPrintListBox, wxBOTTOM, wxT("Output"));
-
-    m_AuiMgr.Update();
+    m_AuiMgrOutputWnd.AddPane(m_pPrintListBox, wxBOTTOM, wxT("Output"));
+    m_AuiMgrOutputWnd.Update();
 
     CChildFrame *pChildFrame = new CChildFrame(this, wxID_ANY, "KhuCv Image");
 
@@ -64,7 +72,7 @@ CMainFrame::CMainFrame(const wxString& title)
 }
 
 CMainFrame::~CMainFrame() {
-    m_AuiMgr.UnInit();
+    m_AuiMgrOutputWnd.UnInit();
 }
 
 void CMainFrame::OnDropFiles(wxDropFilesEvent& event) {
@@ -100,7 +108,7 @@ void CMainFrame::OnClose(wxCloseEvent& event) {
 }
 
 void CMainFrame::OnAbout(wxCommandEvent& event) {
-    wxMessageBox(wxT("KhuCv App ver. 0.0.0.3\n(Open development SW for computer vision)\nCopyright(c) 2022, \nDaeho Lee, Kyung Hee University"), wxT("KhuCv App"), wxICON_INFORMATION);
+    wxMessageBox(wxT("KhuCv App ver. 0.0.0.5\n(Open development SW for computer vision)\nCopyright(c) 2022, \nDaeho Lee, Kyung Hee University"), wxT("KhuCv App"), wxICON_INFORMATION);
 }
 
 void CMainFrame::OnFileOpen(wxCommandEvent& event)
@@ -137,8 +145,32 @@ void CMainFrame::OnRecentFiles(wxCommandEvent & event) {
     }
 }
 
-void CMainFrame::DlgPrintf(const char* ptr, ...)
-{
+void CMainFrame::OnUpdateMenuCheckViewMainDlg(wxUpdateUIEvent& event) {
+    CMainDialog* pMainDialog = GetMainDialog();
+    
+    event.Check(pMainDialog->IsShown());
+}
+
+void CMainFrame::OnMenuCheckViewMainDlg(wxCommandEvent& event) {
+    CMainDialog* pMainDialog = GetMainDialog();
+
+    pMainDialog->Show(!pMainDialog->IsShown());
+}
+
+void CMainFrame::OnUpdateMenuCheckViewOutputWnd(wxUpdateUIEvent& event) {
+    wxAuiPaneInfo& Pane = m_AuiMgrOutputWnd.GetPane(m_pPrintListBox);
+    
+    event.Check(Pane.IsShown());
+}
+
+void CMainFrame::OnMenuCheckViewOutputWnd(wxCommandEvent& event) {
+    wxAuiPaneInfo &Pane = m_AuiMgrOutputWnd.GetPane(m_pPrintListBox);
+
+    Pane.Show(!Pane.IsShown());
+    m_AuiMgrOutputWnd.Update();
+}
+
+void CMainFrame::DlgPrintf(const char* ptr, ...) {
     unsigned int Num;
 
     char ach[1024];
