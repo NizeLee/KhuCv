@@ -8,6 +8,7 @@
 * File open by OpenCV
 * File save by OpenCV (individual image)
 * Images can be displayed any position and can be moved by mouse
+* Strings can be written to Output window (list box)
 * Sequence processing (image/video files)
 
 ## Sequence processing
