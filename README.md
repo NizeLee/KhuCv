@@ -33,10 +33,10 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 		
 		// Project Run;
 		m_Project.Run(CurrentImage, Output, m_pVerboseCheck->GetValue());
-    // m_Porject is a CProject class instance for sequence processing
-    // Since you only modify the CProject class, you can easily show and debug the processing and results
+    		// m_Porject is a CProject class instance for sequence processing
+   		// Since you only modify the CProject class, you can easily show and debug the processing and results
     
-    // Display codes
+   		// Display codes
 		...
 	}
 
