@@ -30,7 +30,7 @@ END_EVENT_TABLE()
 
 CMainDialog::CMainDialog(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style)
 	: wxDialog(parent, id, title, pos, size, style),
-	m_SequenceRunTimer(this, ID_TIMER_SEQUENCE_RUN), m_VideoRunTimer(this, ID_TIMER_VIDEO_RUN)
+	m_SequenceRunTimer(this, ID_TIMER_SEQUENCE_RUN), m_VideoRunTimer(this, ID_TIMER_VIDEO_RUN), m_CamRunTimer(this, ID_TIMER_CAM_RUN)
 {
 	m_pVbox = new wxBoxSizer(wxVERTICAL);
 	
@@ -38,20 +38,20 @@ CMainDialog::CMainDialog(wxWindow* parent, wxWindowID id, const wxString& title,
 		m_pHbox[i] = new wxBoxSizer(wxHORIZONTAL);
 
 	m_pSrcFolderSelButton = new wxButton(this, IDC_SEL_FILE_FOLDER, wxT("..."), wxDefaultPosition, wxSize(30, 20));
-	m_pDisplaySrcPathText = new wxStaticText(this, IDC_DISPLAY_SRC_PATH, wxT(""), wxDefaultPosition, wxSize(200, 20), wxST_NO_AUTORESIZE);
-	m_pVideoFileCheck = new wxCheckBox(this, IDC_VIDEO_FILE_CHECK, wxT("Video file"), wxDefaultPosition, wxSize(70, 20));
+	m_pDisplaySrcPathText = new wxStaticText(this, IDC_DISPLAY_SRC_PATH, wxT(""), wxDefaultPosition, wxSize(180, 20), wxST_NO_AUTORESIZE);
+	m_pVideoFileCheck = new wxCheckBox(this, IDC_VIDEO_FILE_CHECK, wxT("Video file"), wxDefaultPosition, wxSize(90, 20));
 
 	m_pHbox[0]->Add(m_pSrcFolderSelButton, 0);
 	m_pHbox[0]->Add(m_pDisplaySrcPathText, 1, wxLEFT, 5);
-	m_pHbox[0]->Add(m_pVideoFileCheck, 1, wxLEFT, 5);
+	m_pHbox[0]->Add(m_pVideoFileCheck, 0, wxLEFT, 5);
 
 	m_pDesFolderSelButton = new wxButton(this, IDC_SEL_DES_FOLDER, wxT("..."), wxDefaultPosition, wxSize(30, 20));
-	m_pDisplayDesPathText = new wxStaticText(this, IDC_DISPLAY_DES_PATH, wxT(""), wxDefaultPosition, wxSize(200, 20), wxST_NO_AUTORESIZE);
-	m_pSaveFrameCheck = new wxCheckBox(this, IDC_SAVE_FRAME_CHECK, wxT("Frame save"), wxDefaultPosition, wxSize(70, 20));
+	m_pDisplayDesPathText = new wxStaticText(this, IDC_DISPLAY_DES_PATH, wxT(""), wxDefaultPosition, wxSize(180, 20), wxST_NO_AUTORESIZE);
+	m_pSaveFrameCheck = new wxCheckBox(this, IDC_SAVE_FRAME_CHECK, wxT("Frame save"), wxDefaultPosition, wxSize(90, 20));
 
 	m_pHbox[1]->Add(m_pDesFolderSelButton, 0);
 	m_pHbox[1]->Add(m_pDisplayDesPathText, 1, wxLEFT, 5);
-	m_pHbox[1]->Add(m_pSaveFrameCheck, 1, wxLEFT, 5);
+	m_pHbox[1]->Add(m_pSaveFrameCheck, 0, wxLEFT, 5);
 
 
 	m_pListCtrl = new wxListCtrl(this, IDC_FILE_LIST_CTRL, wxDefaultPosition, wxSize(320, 150), 
@@ -70,16 +70,18 @@ CMainDialog::CMainDialog(wxWindow* parent, wxWindowID id, const wxString& title,
 	m_pHbox[3]->Add(m_pEndNum, 1, wxLEFT, 5);
 	m_pHbox[3]->Add(m_pClearImagesCheck, 0, wxLEFT, 5);
 
-	m_pRunButton = new wxButton(this, IDC_RUN, wxT("Run"), wxDefaultPosition, wxSize(70, 20));
-	m_pPauseButton = new wxButton(this, IDC_PAUSE, wxT("Pause"), wxDefaultPosition, wxSize(70, 20));
-	m_pStepCheck = new wxCheckBox(this, IDC_SEL_STEP_CHECK, wxT("Step"), wxDefaultPosition, wxSize(30, 20));
-	m_pVerboseCheck = new wxCheckBox(this, IDC_SEL_VERBOSE_CHECK, wxT("Verbose"), wxDefaultPosition, wxSize(30, 20));
+	m_pSelCam = new wxCheckBox(this, IDC_SEL_CAME, wxT("Cam"), wxDefaultPosition, wxSize(20, 20));
+	m_pRunButton = new wxButton(this, IDC_RUN, wxT("Run"), wxDefaultPosition, wxSize(50, 20));
+	m_pPauseButton = new wxButton(this, IDC_PAUSE, wxT("Pause"), wxDefaultPosition, wxSize(50, 20));
+	m_pStepCheck = new wxCheckBox(this, IDC_SEL_STEP_CHECK, wxT("Step"), wxDefaultPosition, wxSize(20, 20));
+	m_pVerboseCheck = new wxCheckBox(this, IDC_SEL_VERBOSE_CHECK, wxT("Verbose"), wxDefaultPosition, wxSize(60, 20));
 	m_pVerboseCheck->SetValue(true);
 
-	m_pHbox[4]->Add(m_pRunButton, 1);
+	m_pHbox[4]->Add(m_pSelCam, 1);
+	m_pHbox[4]->Add(m_pRunButton, 1, wxLEFT, 5);
 	m_pHbox[4]->Add(m_pPauseButton, 1, wxLEFT, 5);
 	m_pHbox[4]->Add(m_pStepCheck, 1, wxLEFT, 5);
-	m_pHbox[4]->Add(m_pVerboseCheck, 1, wxLEFT, 5);
+	m_pHbox[4]->Add(m_pVerboseCheck, 0, wxLEFT, 5);
 
 	m_pExampleButton = new wxButton(this, IDC_EXAMPLE, wxT("Example"), wxDefaultPosition, wxSize(70, 20));
 	m_pHbox[5]->Add(m_pExampleButton, 1);
@@ -260,7 +262,30 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 	cv::Mat CurrentImage;
 	bool bLoaded = false;;
 
-	if (event.GetId() == ID_TIMER_SEQUENCE_RUN) {
+	if (event.GetId() == ID_TIMER_CAM_RUN) {
+		m_CamProcessingVc >> CurrentImage;
+
+		sprintf(frameInfo, "Cam frame: %5.3lf", m_nProcessingNum/30.);
+
+		if (CurrentImage.empty()) {
+			m_nProcessingNum++;
+
+			return;
+		}
+
+		if (m_pSaveFrameCheck->GetValue()) {
+			char SaveFileName[256];
+
+			char FolderName[256];
+			strcpy(FolderName, m_pDisplayDesPathText->GetLabelText());
+
+			sprintf(SaveFileName, "%s/frame%05d.jpg", FolderName, m_nProcessingNum);
+			cv::imwrite(SaveFileName, CurrentImage);
+		}
+
+		bLoaded = true;
+	}
+	else if (event.GetId() == ID_TIMER_SEQUENCE_RUN) {
 		if (m_nProcessingNum >= m_pListCtrl->GetItemCount()) {
 			m_bRunTimer = false;
 			m_pRunButton->SetLabelText("Run");
@@ -277,9 +302,6 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 		CurrentImage = cv::imread(fileName, cv::IMREAD_COLOR);
 
 		if (CurrentImage.empty()) {
-			//m_bRunTimer = false;
-			//m_pRunButton->SetLabelText("Run");
-			//m_SequenceRunTimer.Stop();
 			m_nProcessingNum++;
 
 			return;
@@ -310,9 +332,6 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 			sprintf(frameInfo, "Video frame: %5.3lf", m_nProcessingNum/videoFPS);
 
 			if (CurrentImage.empty()) {
-				//m_bRunTimer = false;
-				//m_pRunButton->SetLabelText("Run");
-				//m_VideoRunTimer.Stop();
 				m_nProcessingNum++;
 
 				return;
@@ -358,7 +377,10 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 		if (!CurrentImage.empty()) {
 			if (!Output.empty()) DisplayImage(Output, CurrentImage.cols, 0, false, false);
 			
-			if (event.GetId() == ID_TIMER_SEQUENCE_RUN) {
+			if (event.GetId() == ID_TIMER_CAM_RUN) {
+				DlgPrintf("%05d: %s, %10.5lfms", m_nProcessingNum, frameInfo, processingTime);
+			}
+			else if (event.GetId() == ID_TIMER_SEQUENCE_RUN) {
 				DlgPrintf("%05d: %s, %10.5lfms", m_nProcessingNum, fileName, processingTime);
 			}
 			else if (event.GetId() == ID_TIMER_VIDEO_RUN) {
@@ -367,7 +389,10 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 		}
 		else
 		{
-			if (event.GetId() == ID_TIMER_SEQUENCE_RUN) {
+			if (event.GetId() == ID_TIMER_CAM_RUN) {
+				DlgPrintf("%05d: %s - load error", m_nProcessingNum, frameInfo);
+			}
+			else if (event.GetId() == ID_TIMER_SEQUENCE_RUN) {
 				DlgPrintf("%05d: %s - load error", m_nProcessingNum, fileName);
 			}
 			else if (event.GetId() == ID_TIMER_VIDEO_RUN) {
@@ -386,9 +411,34 @@ void CMainDialog::OnPause(wxCommandEvent& event) {
 }
 
 void CMainDialog::OnRun(wxCommandEvent& event) {
-	bool bFileMode = m_pVideoFileCheck->GetValue();
-	
-	if (!bFileMode) {
+	bool bVidieFileMode = m_pVideoFileCheck->GetValue();
+	bool bCamMode = m_pSelCam->GetValue();
+
+	if (bCamMode) {
+		if (!m_bRunTimer) {
+			int nStart = 0;
+			
+			m_CamProcessingVc.open(0);
+
+			if (m_CamProcessingVc.isOpened()) {
+				m_nProcessingNum = nStart;
+
+				m_bRunTimer = true;
+				m_bRunPause = false;
+
+				m_pRunButton->SetLabelText("Stop");
+				m_CamRunTimer.Start(10);
+			}
+		}
+		else {
+			m_bRunTimer = false;
+			m_pRunButton->SetLabelText("Run");
+			m_CamRunTimer.Stop();
+
+			m_CamProcessingVc.release();
+		}
+	}
+	else if (!bVidieFileMode) {
 		if (!m_bRunTimer && m_pListCtrl->GetItemCount() > 0) {
 			m_bRunTimer = true;
 			m_bRunPause = false;

@@ -114,7 +114,7 @@ void CMainFrame::OnClose(wxCloseEvent& event) {
 }
 
 void CMainFrame::OnAbout(wxCommandEvent& event) {
-    wxMessageBox(wxT("KhuCv App ver. 1.0.0.0\n(Open development SW for computer vision)\nCopyright(c) 2022, \nDaeho Lee, Kyung Hee University"), wxT("KhuCv App"), wxICON_INFORMATION);
+    wxMessageBox(wxT("KhuCv App ver. 1.0.1.0\n(Open development SW for computer vision)\nCopyright(c) 2022, \nDaeho Lee, Kyung Hee University"), wxT("KhuCv App"), wxICON_INFORMATION);
 }
 
 void CMainFrame::OnFileOpen(wxCommandEvent& event)

@@ -29,6 +29,7 @@ enum
     IDC_START_NUM,
     IDC_END_NUM,
     IDC_CLEAR_IMAGES_CHECK,
+    IDC_SEL_CAME,
     IDC_RUN,
     IDC_PAUSE,
     IDC_SEL_STEP_CHECK,
@@ -39,6 +40,7 @@ enum
 
     ID_TIMER_SEQUENCE_RUN = 1001,
     ID_TIMER_VIDEO_RUN,
+    ID_TIMER_CAM_RUN,
 };
 
 class CMainFrame : public wxMDIParentFrame {

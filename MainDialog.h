@@ -32,6 +32,7 @@ public:
 	wxTextCtrl* m_pEndNum;
 	wxCheckBox* m_pClearImagesCheck;
 
+	wxCheckBox* m_pSelCam;
 	wxButton* m_pRunButton;
 	wxButton* m_pPauseButton;
 	wxCheckBox* m_pStepCheck;
@@ -45,7 +46,10 @@ public:
 
 	wxTimer m_VideoRunTimer;
 	cv::VideoCapture m_VideoProcessingVc;
+	cv::VideoCapture m_CamProcessingVc;
 	char m_VideoFileName[256];
+
+	wxTimer m_CamRunTimer;
 
 	CProject m_Project;
 
