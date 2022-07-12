@@ -418,8 +418,8 @@ void CMainDialog::OnRun(wxCommandEvent& event) {
 		if (!m_bRunTimer) {
 			int nStart = 0;
 			
-			m_CamProcessingVc.open(0);
-
+			m_CamProcessingVc.open(0, cv::CAP_DSHOW);
+			
 			if (m_CamProcessingVc.isOpened()) {
 				m_nProcessingNum = nStart;
 
