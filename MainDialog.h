@@ -32,7 +32,7 @@ public:
 	wxTextCtrl* m_pEndNum;
 	wxCheckBox* m_pClearImagesCheck;
 
-	wxCheckBox* m_pSelCam;
+	wxComboBox* m_pSelCam;
 	wxButton* m_pRunButton;
 	wxButton* m_pPauseButton;
 	wxCheckBox* m_pStepCheck;

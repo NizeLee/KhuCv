@@ -70,7 +70,29 @@ CMainDialog::CMainDialog(wxWindow* parent, wxWindowID id, const wxString& title,
 	m_pHbox[3]->Add(m_pEndNum, 1, wxLEFT, 5);
 	m_pHbox[3]->Add(m_pClearImagesCheck, 0, wxLEFT, 5);
 
-	m_pSelCam = new wxCheckBox(this, IDC_SEL_CAME, wxT("Cam"), wxDefaultPosition, wxSize(20, 20));
+	cv::VideoCapture camera;
+	int device_counts = 0;
+	while (true) {
+		if (!camera.open(device_counts, cv::CAP_DSHOW)) {
+			camera.release();
+			break;
+		}
+		DlgPrintf("WebCam(%d): %s", device_counts, camera.getBackendName());
+		device_counts++;
+		camera.release();
+	}
+
+	wxArrayString CamString;
+
+	CamString.Add("No-Cam");
+	for (int i = 0; i < device_counts; ++i) {
+		char ListName[100] = { 0, };
+		sprintf(ListName, "%d-Cam", i);
+		CamString.Add(ListName);
+	}
+
+	m_pSelCam = new wxComboBox(this, IDC_SEL_CAM, wxEmptyString, wxDefaultPosition, wxSize(60, 20), CamString, wxCB_DROPDOWN | wxCB_READONLY);
+	m_pSelCam->SetSelection(0);
 	m_pRunButton = new wxButton(this, IDC_RUN, wxT("Run"), wxDefaultPosition, wxSize(50, 20));
 	m_pPauseButton = new wxButton(this, IDC_PAUSE, wxT("Pause"), wxDefaultPosition, wxSize(50, 20));
 	m_pStepCheck = new wxCheckBox(this, IDC_SEL_STEP_CHECK, wxT("Step"), wxDefaultPosition, wxSize(20, 20));
@@ -378,13 +400,13 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 			if (!Output.empty()) DisplayImage(Output, CurrentImage.cols, 0, false, false);
 			
 			if (event.GetId() == ID_TIMER_CAM_RUN) {
-				DlgPrintf("%05d: %s, %10.5lfms", m_nProcessingNum, frameInfo, processingTime);
+				DlgPrintf("%05d: %s, %10.5lfms, %7dx%4d", m_nProcessingNum, frameInfo, processingTime, CurrentImage.cols, CurrentImage.rows);
 			}
 			else if (event.GetId() == ID_TIMER_SEQUENCE_RUN) {
-				DlgPrintf("%05d: %s, %10.5lfms", m_nProcessingNum, fileName, processingTime);
+				DlgPrintf("%05d: %s, %10.5lfms, %7dx%4d", m_nProcessingNum, fileName, processingTime, CurrentImage.cols, CurrentImage.rows);
 			}
 			else if (event.GetId() == ID_TIMER_VIDEO_RUN) {
-				DlgPrintf("%05d: %s, %10.5lfms", m_nProcessingNum, frameInfo, processingTime);
+				DlgPrintf("%05d: %s, %10.5lfms, %7dx%4d", m_nProcessingNum, frameInfo, processingTime, CurrentImage.cols, CurrentImage.rows);
 			}
 		}
 		else
@@ -412,13 +434,16 @@ void CMainDialog::OnPause(wxCommandEvent& event) {
 
 void CMainDialog::OnRun(wxCommandEvent& event) {
 	bool bVidieFileMode = m_pVideoFileCheck->GetValue();
-	bool bCamMode = m_pSelCam->GetValue();
+	bool bCamMode;
+
+	int nCamNum = m_pSelCam->GetSelection()-1;
+	bCamMode = nCamNum>=0?true:false;
 
 	if (bCamMode) {
 		if (!m_bRunTimer) {
 			int nStart = 0;
 			
-			m_CamProcessingVc.open(0, cv::CAP_DSHOW);
+			m_CamProcessingVc.open(nCamNum, cv::CAP_DSHOW);
 			
 			if (m_CamProcessingVc.isOpened()) {
 				m_nProcessingNum = nStart;
