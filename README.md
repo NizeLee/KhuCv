@@ -76,26 +76,37 @@
     - $ make
     
 * Build
-  + Windows (+Visual Studio)
-    - Make new desktop empty project
+  + Windows (+Visual Studio) I
+    - Make new desktop empty project (wxWidgets sample: https://wiki.wxwidgets.org/Microsoft_Visual_C%2B%2B_Guide)
     - Add source/header files 
     - Add Include and library paths
     - Add opencv_world4xx.lib to Additional Dependencies
     - Build
-    - [OR]
+  + Windows (+Visual Studio) II
     - Run "Developer Command Prompt for VS 20XX"
     - $ cd build-windows
-    - $ cmake . -A x64 -T host=x64  -DWX_ROOTDIR=[DIR] -DOPENCV_ROOTDIR=[DIR]
+    - [MDI]$ cmake . -A x64 -T host=x64  -DWX_ROOTDIR=[DIR] -DOPENCV_ROOTDIR=[DIR]
+    -    ex. cmake . -A x64 -T host=x64  -DWX_ROOTDIR="G:/Cpp_Libs/wxWidgets/wxWidgets-3.1.6" -DOPENCV_ROOTDIR="G:/Cpp_Libs/OpenCV/OpenCV_64/install"
+    -    ex. cmake . -A x64 -T host=x64  -DWX_ROOTDIR="G:/Cpp_Libs/wxWidgets/wxWidgets-3.1.6" -DOPENCV_ROOTDIR="G:/Cpp_Libs/OpenCV/build"
+    - [SDI]$ cmake . -DSDI=True -A x64 -T host=x64  -DWX_ROOTDIR=[DIR] -DOPENCV_ROOTDIR=[DIR]
     -    ex. cmake . -A x64 -T host=x64  -DWX_ROOTDIR="G:/Cpp_Libs/wxWidgets/wxWidgets-3.1.6" -DOPENCV_ROOTDIR="G:/Cpp_Libs/OpenCV/OpenCV_64/install"
     -    ex. cmake . -A x64 -T host=x64  -DWX_ROOTDIR="G:/Cpp_Libs/wxWidgets/wxWidgets-3.1.6" -DOPENCV_ROOTDIR="G:/Cpp_Libs/OpenCV/build"
     - $ msbuild KhuCv.vcxproj /p:configuration=release /p:platform=x64 /p:CharacterSet=Unicode 
   + Linux (Ubuntu) 
     - $ cd build-linux
-    - $ cmake .
+    - [MDI] $ cmake .
+    - [SDI] $ cmake . -DSDI=True
     - $ make
-  + Mac
+  + Mac (+Xcode) I
+    - wxWidgets sample: https://wiki.wxwidgets.org/Creating_Xcode_projects_for_wxWidgets_applications)
+    - Add source/header files 
+    - Add Include and library paths
+    - Add opencv libraries
+    - Build
+  + Mac II
     - $ cd build-mac
-    - $ cmake .
+    - [MDI] $ cmake .
+    - [SDI] $ cmake . -DSDI=True
     - $ make
 
 [Windows]
