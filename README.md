@@ -76,6 +76,7 @@
     - $ make
     
 * Build
+  + MDI (multiple-document interface, default), SDI (single-document interface, define _KHUCV_SDI)
   + Windows (+Visual Studio) I
     - Make new desktop empty project (wxWidgets sample: https://wiki.wxwidgets.org/Microsoft_Visual_C%2B%2B_Guide)
     - Add source/header files 
@@ -85,13 +86,14 @@
   + Windows (+Visual Studio) II
     - Run "Developer Command Prompt for VS 20XX"
     - $ cd build-windows
-    - [MDI]$ cmake . -A x64 -T host=x64  -DWX_ROOTDIR=[DIR] -DOPENCV_ROOTDIR=[DIR]
-    -    ex. cmake . -A x64 -T host=x64  -DWX_ROOTDIR="G:/Cpp_Libs/wxWidgets/wxWidgets-3.1.6" -DOPENCV_ROOTDIR="G:/Cpp_Libs/OpenCV/OpenCV_64/install"
-    -    ex. cmake . -A x64 -T host=x64  -DWX_ROOTDIR="G:/Cpp_Libs/wxWidgets/wxWidgets-3.1.6" -DOPENCV_ROOTDIR="G:/Cpp_Libs/OpenCV/build"
-    - [SDI]$ cmake . -DSDI=True -A x64 -T host=x64  -DWX_ROOTDIR=[DIR] -DOPENCV_ROOTDIR=[DIR]
-    -    ex. cmake . -A x64 -T host=x64  -DWX_ROOTDIR="G:/Cpp_Libs/wxWidgets/wxWidgets-3.1.6" -DOPENCV_ROOTDIR="G:/Cpp_Libs/OpenCV/OpenCV_64/install"
-    -    ex. cmake . -A x64 -T host=x64  -DWX_ROOTDIR="G:/Cpp_Libs/wxWidgets/wxWidgets-3.1.6" -DOPENCV_ROOTDIR="G:/Cpp_Libs/OpenCV/build"
-    - $ msbuild KhuCv.vcxproj /p:configuration=release /p:platform=x64 /p:CharacterSet=Unicode 
+    - $ [MDI] cmake . -A x64 -T host=x64  -DWX_ROOTDIR=[DIR] -DOPENCV_ROOTDIR=[DIR]
+    -    e.g.) cmake . -A x64 -T host=x64  -DWX_ROOTDIR="G:/Cpp_Libs/wxWidgets/wxWidgets-3.1.6" -DOPENCV_ROOTDIR="G:/Cpp_Libs/OpenCV/OpenCV_64/install"
+    -    e.g.) cmake . -A x64 -T host=x64  -DWX_ROOTDIR="G:/Cpp_Libs/wxWidgets/wxWidgets-3.1.6" -DOPENCV_ROOTDIR="G:/Cpp_Libs/OpenCV/build"
+    - $ [SDI] cmake . -DSDI=True -A x64 -T host=x64  -DWX_ROOTDIR=[DIR] -DOPENCV_ROOTDIR=[DIR]
+    -    e.g.) cmake . -DSDI=True -A x64 -T host=x64  -DWX_ROOTDIR="G:/Cpp_Libs/wxWidgets/wxWidgets-3.1.6" -DOPENCV_ROOTDIR="G:/Cpp_Libs/OpenCV/OpenCV_64/install"
+    -    e.g.) cmake . -DSDI=True -A x64 -T host=x64  -DWX_ROOTDIR="G:/Cpp_Libs/wxWidgets/wxWidgets-3.1.6" -DOPENCV_ROOTDIR="G:/Cpp_Libs/OpenCV/build"
+    - $ [MDI] msbuild KhuCv.vcxproj /p:configuration=release /p:platform=x64 /p:CharacterSet=Unicode 
+    - $ [SDI] msbuild KhuCvS.vcxproj /p:configuration=release /p:platform=x64 /p:CharacterSet=Unicode 
   + Linux (Ubuntu) 
     - $ cd build-linux
     - [MDI] $ cmake .
@@ -109,13 +111,16 @@
     - [SDI] $ cmake . -DSDI=True
     - $ make
 
-[Windows]
+[Windows-MDI]
 <img src="/images/KhuCv.png"></img>
 
-[Linux-Ubuntu]
+[Windows-SDI]
+<img src="/images/KhuCv_sdi.png"></img>
+
+[Linux-Ubuntu-MDI]
 <img src="/images/KhuCv-linux.png"></img> 
 
-[Mac]
+[Mac-MDI]
 <img src="/images/KhuCv-mac.png"></img>    
     
 ## Sequence processing
