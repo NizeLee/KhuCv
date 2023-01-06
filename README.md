@@ -110,19 +110,19 @@
     - $ make
 
 [Windows]
-<img src="KhuCv.png"></img>
+<img src="/images/KhuCv.png"></img>
 
 [Linux-Ubuntu]
-<img src="KhuCv-linux.png"></img> 
+<img src="/images/KhuCv-linux.png"></img> 
 
 [Mac]
-<img src="KhuCv-mac.png"></img>    
+<img src="/images/KhuCv-mac.png"></img>    
     
 ## Sequence processing
 * Image sequences and video files
 * **Example**
   + Open mp4 file and Run
-<br><img src="KhuCv.gif"></img>  
+<br><img src="/images/KhuCv.gif"></img>  
 
 ## Source code
 * Call a method (Run) for image processing
