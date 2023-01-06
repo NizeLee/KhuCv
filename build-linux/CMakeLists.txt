@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.7)
 
-SDI=${SDI}
+message("SDI=${SDI}")
 if(SDI) 
     message("SDI")
     project(KhuCvS)
