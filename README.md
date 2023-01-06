@@ -87,11 +87,11 @@
     - Run "Developer Command Prompt for VS 20XX"
     - $ cd build-windows
     - $ [MDI] cmake . -A x64 -T host=x64  -DWX_ROOTDIR=[DIR] -DOPENCV_ROOTDIR=[DIR]
-    -    e.g.) cmake . -A x64 -T host=x64  -DWX_ROOTDIR="G:/Cpp_Libs/wxWidgets/wxWidgets-3.1.6" -DOPENCV_ROOTDIR="G:/Cpp_Libs/OpenCV/OpenCV_64/install"
-    -    e.g.) cmake . -A x64 -T host=x64  -DWX_ROOTDIR="G:/Cpp_Libs/wxWidgets/wxWidgets-3.1.6" -DOPENCV_ROOTDIR="G:/Cpp_Libs/OpenCV/build"
+        e.g.) cmake . -A x64 -T host=x64  -DWX_ROOTDIR="G:/Cpp_Libs/wxWidgets/wxWidgets-3.1.6" -DOPENCV_ROOTDIR="G:/Cpp_Libs/OpenCV/OpenCV_64/install"
+        e.g.) cmake . -A x64 -T host=x64  -DWX_ROOTDIR="G:/Cpp_Libs/wxWidgets/wxWidgets-3.1.6" -DOPENCV_ROOTDIR="G:/Cpp_Libs/OpenCV/build"
     - $ [SDI] cmake . -DSDI=True -A x64 -T host=x64  -DWX_ROOTDIR=[DIR] -DOPENCV_ROOTDIR=[DIR]
-    -    e.g.) cmake . -DSDI=True -A x64 -T host=x64  -DWX_ROOTDIR="G:/Cpp_Libs/wxWidgets/wxWidgets-3.1.6" -DOPENCV_ROOTDIR="G:/Cpp_Libs/OpenCV/OpenCV_64/install"
-    -    e.g.) cmake . -DSDI=True -A x64 -T host=x64  -DWX_ROOTDIR="G:/Cpp_Libs/wxWidgets/wxWidgets-3.1.6" -DOPENCV_ROOTDIR="G:/Cpp_Libs/OpenCV/build"
+        e.g.) cmake . -DSDI=True -A x64 -T host=x64  -DWX_ROOTDIR="G:/Cpp_Libs/wxWidgets/wxWidgets-3.1.6" -DOPENCV_ROOTDIR="G:/Cpp_Libs/OpenCV/OpenCV_64/install"
+        e.g.) cmake . -DSDI=True -A x64 -T host=x64  -DWX_ROOTDIR="G:/Cpp_Libs/wxWidgets/wxWidgets-3.1.6" -DOPENCV_ROOTDIR="G:/Cpp_Libs/OpenCV/build"
     - $ [MDI] msbuild KhuCv.vcxproj /p:configuration=release /p:platform=x64 /p:CharacterSet=Unicode 
     - $ [SDI] msbuild KhuCvS.vcxproj /p:configuration=release /p:platform=x64 /p:CharacterSet=Unicode 
   + Linux (Ubuntu) 
