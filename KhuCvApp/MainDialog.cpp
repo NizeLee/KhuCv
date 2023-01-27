@@ -166,15 +166,21 @@ void CMainDialog::OnSelSrcFileFolder(wxCommandEvent& event) {
 		bool cont = dir.GetFirst(&filename);
 		int nNum = 0;
 		char NumString[100];
+		
+		wxArrayString FilePathArray;
+		
 		while (cont) {
 			wxString filePath = dir.GetNameWithSep() + filename;
-
+			FilePathArray.Add(filePath);
+			cont = dir.GetNext(&filename);
+		}
+		
+		FilePathArray.Sort();
+		for (int i = 0; i < FilePathArray.GetCount(); ++i) {
 			sprintf(NumString, "%d", nNum++);
 			int len = m_pListCtrl->GetItemCount();
 			long index = m_pListCtrl->InsertItem(len, NumString);
-			m_pListCtrl->SetItem(index, 1, filePath);
-
-			cont = dir.GetNext(&filename);
+			m_pListCtrl->SetItem(index, 1, FilePathArray[i]);
 		}
 
 		m_pEndNum->Clear();
