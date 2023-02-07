@@ -45,6 +45,8 @@ public:
     virtual bool OnInit();
 };
 
+DECLARE_APP(CKhuCvApp)
+
 #ifndef _KHUCV_SDI
 void NewFileOpen(const char* fileName, cv::Mat cvImage, int nPosX=0, int nPosY=0);
 #endif
