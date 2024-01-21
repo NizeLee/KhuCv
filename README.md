@@ -41,7 +41,7 @@
     - $ sudo su
     - make install
     - exit
-    - $ cd smaples
+    - $ cd samples
     - $ make
     - $cd ../demos
     - $make
