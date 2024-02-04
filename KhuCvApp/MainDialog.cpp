@@ -659,8 +659,6 @@ void CMainDialog::OnExample(wxCommandEvent& event) {
 
 	DisplayImage(img_threshold, kcImage.pos.x + kcImage.cvImage.cols, kcImage.pos.y, true, false);
 	DisplayImage(img_labels, kcImage.pos.x + kcImage.cvImage.cols * 2, kcImage.pos.y, true, false);
-
-	
 }
 
 #ifndef _KHUCV_SDI

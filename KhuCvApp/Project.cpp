@@ -37,6 +37,7 @@ void CProject::Run(cv::Mat Input, cv::Mat& Output, bool bFirstRun, bool bVerbose
 		}
 	}
 
+	m_PreviousImage = Input.clone();
 	///// Example code - End
 }
 
