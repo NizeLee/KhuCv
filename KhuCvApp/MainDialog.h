@@ -1,7 +1,7 @@
 //  MainDialog.h: interface of CMainDialog (main dialog of KhuCvApp)
 //	Dept. Software Convergence, Kyung Hee University
 //	Prof. Daeho Lee, nize@khu.ac.kr
-//
+//	KhuCv App ver. 1.0.2.0
 
 #pragma once
 
@@ -49,12 +49,16 @@ public:
 
 	wxTimer m_SequenceRunTimer;
 	int m_nProcessingNum;
+	std::wstring m_strSaveFileNameHeader;
 	bool m_bRunTimer, m_bRunPause;
 
 	wxTimer m_VideoRunTimer;
 	cv::VideoCapture m_VideoProcessingVc;
 	cv::VideoCapture m_CamProcessingVc;
-	char m_VideoFileName[256];
+	std::wstring m_VideoFileName;
+	std::wstring m_VideoFilePath;
+	std::string m_VideoFileNameUtf8;
+	std::string m_VideoFilePathUtf8;
 	int m_nVideoFileFrameCnt;
 
 	wxTimer m_CamRunTimer;

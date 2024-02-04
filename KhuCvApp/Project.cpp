@@ -1,20 +1,10 @@
 //  Project.cpp: implementation of CProject (main project class you will write)
 //	Dept. Software Convergence, Kyung Hee University
 //	Prof. Daeho Lee, nize@khu.ac.kr
-//
+//	KhuCv App ver. 1.0.2.0
 
 #include "KhuCvApp.h"
 #include "Project.h"
-
-#ifdef _MSC_VER
-#ifdef _DEBUG
-#define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
-#include <crtdbg.h>
-#define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
-#define new DEBUG_NEW
-#endif
-#endif
 
 CProject::CProject() {
 	GetExecutionPath();
@@ -27,8 +17,7 @@ void CProject::GetExecutionPath() {
 	wxFileName f(wxStandardPaths::Get().GetExecutablePath());
 	wxString appPath(f.GetPath());
 
-	wcscpy(m_ExePathUnicode, appPath);
-	strcpy(m_ExePath, appPath.c_str());
+	m_ExePathUnicode = appPath;
 }
 
 void CProject::Run(cv::Mat Input, cv::Mat& Output, bool bFirstRun, bool bVerbose) {
@@ -48,7 +37,6 @@ void CProject::Run(cv::Mat Input, cv::Mat& Output, bool bFirstRun, bool bVerbose
 		}
 	}
 
-	m_PreviousImage = Input.clone();
 	///// Example code - End
 }
 

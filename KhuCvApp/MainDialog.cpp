@@ -1,22 +1,11 @@
 //  MainDialog.cpp: implementation of CMainDialog (main dialog of KhuCvApp)
 //	Dept. Software Convergence, Kyung Hee University
 //	Prof. Daeho Lee, nize@khu.ac.kr
-//
+//	KhuCv App ver. 1.0.2.0
 
 #include "KhuCvApp.h"
 
 #include <chrono>
-
-
-#ifdef _MSC_VER
-#ifdef _DEBUG
-#define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
-#include <crtdbg.h>
-#define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
-#define new DEBUG_NEW
-#endif
-#endif
 
 BEGIN_EVENT_TABLE(CMainDialog, wxDialog)
 EVT_BUTTON(IDC_SEL_FILE_FOLDER, CMainDialog::OnSelSrcFileFolder)
@@ -30,7 +19,8 @@ END_EVENT_TABLE()
 
 CMainDialog::CMainDialog(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style)
 	: wxDialog(parent, id, title, pos, size, style),
-	m_SequenceRunTimer(this, ID_TIMER_SEQUENCE_RUN), m_VideoRunTimer(this, ID_TIMER_VIDEO_RUN), m_CamRunTimer(this, ID_TIMER_CAM_RUN)
+	m_SequenceRunTimer(this, ID_TIMER_SEQUENCE_RUN), m_VideoRunTimer(this, ID_TIMER_VIDEO_RUN), m_CamRunTimer(this, ID_TIMER_CAM_RUN), m_bFirstRun(false), m_nProcessingNum(0),
+	m_nVideoFileFrameCnt(0)
 {
 	m_pVbox = new wxBoxSizer(wxVERTICAL);
 	
@@ -56,8 +46,8 @@ CMainDialog::CMainDialog(wxWindow* parent, wxWindowID id, const wxString& title,
 
 	m_pListCtrl = new wxListCtrl(this, IDC_FILE_LIST_CTRL, wxDefaultPosition, wxSize(520, 150),
 		wxLC_REPORT | wxLC_SINGLE_SEL | wxSUNKEN_BORDER);
-	long indx1 = m_pListCtrl->InsertColumn(0, "Num", wxLIST_FORMAT_LEFT, 50);
-	long indx2 = m_pListCtrl->InsertColumn(1, "File name", wxLIST_FORMAT_LEFT, 270);
+	long index1 = m_pListCtrl->InsertColumn(0, "Num", wxLIST_FORMAT_LEFT, 95);
+	long index2 = m_pListCtrl->InsertColumn(1, "File name", wxLIST_FORMAT_LEFT, 270);
 
 	m_pHbox[2]->Add(m_pListCtrl, 1);
 
@@ -78,18 +68,22 @@ CMainDialog::CMainDialog(wxWindow* parent, wxWindowID id, const wxString& title,
 			camera.release();
 			break;
 		}
-		DlgPrintf("WebCam(%d): %s", device_counts, camera.getBackendName().c_str());
+		std::string camBackend = camera.getBackendName().c_str();
+		std::wstring camBackendw;
+		camBackendw.assign(camBackend.begin(), camBackend.end());
+
+		DlgPrintf(L"WebCam(%d): %ls", device_counts, camBackendw.c_str());
 		device_counts++;
 		camera.release();
 	}
 
 	wxArrayString CamString;
 
-	CamString.Add("No-Cam");
+	CamString.Add(L"No-Cam");
 	for (int i = 0; i < device_counts; ++i) {
-		char ListName[100] = { 0, };
-		sprintf(ListName, "%d-Cam", i);
-		CamString.Add(ListName);
+		std::wstringstream ListName;
+		ListName << i << L"-Cam";
+		CamString.Add(ListName.str());
 	}
 
 	m_pSelCam = new wxComboBox(this, IDC_SEL_CAM, wxEmptyString, wxDefaultPosition, wxSize(60, 20), CamString, wxCB_DROPDOWN | wxCB_READONLY);
@@ -165,38 +159,44 @@ void CMainDialog::OnSelSrcFileFolder(wxCommandEvent& event) {
 		wxString filename;
 		bool cont = dir.GetFirst(&filename);
 		int nNum = 0;
-		char NumString[100];
-		
+		std::wstringstream NumString;
+
 		wxArrayString FilePathArray;
-		
+
 		while (cont) {
 			wxString filePath = dir.GetNameWithSep() + filename;
 			FilePathArray.Add(filePath);
 			cont = dir.GetNext(&filename);
 		}
-		
+
 		FilePathArray.Sort();
 		for (int i = 0; i < FilePathArray.GetCount(); ++i) {
-			sprintf(NumString, "%d", nNum++);
+			NumString << std::setw(10) << std::setfill(L'0') << nNum++;
 			int len = m_pListCtrl->GetItemCount();
-			long index = m_pListCtrl->InsertItem(len, NumString);
+			long index = m_pListCtrl->InsertItem(len, NumString.str().c_str());
 			m_pListCtrl->SetItem(index, 1, FilePathArray[i]);
+
+			NumString.str(L"");
 		}
 
 		m_pEndNum->Clear();
-		*m_pEndNum << nNum-1;
+		*m_pEndNum << nNum - 1;
 	}
 	else {
-		 wxFileDialog openFileDialog(this, "Open Video file", "", "",
-			 "Mp4 files(*.mp4)|*.mp4|All files(*.*)|*.*", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+		 wxFileDialog openFileDialog(this, L"Open Video file", L"", L"",
+			 L"Mp4 files(*.mp4)|*.mp4|All files(*.*)|*.*", wxFD_OPEN);
 
 		 if (openFileDialog.ShowModal() == wxID_CANCEL) return;
 
 		 m_pDisplaySrcPathText->SetLabelText(openFileDialog.GetPath());
 
-		 strcpy(m_VideoFileName, openFileDialog.GetPath());
+		 m_VideoFilePath = openFileDialog.GetPath();
+		 m_VideoFileName = openFileDialog.GetFilename();
 
-		 m_VideoProcessingVc.open(m_VideoFileName);
+		 m_VideoFilePathUtf8 = UnicodeToUTF8(m_VideoFilePath);
+		 m_VideoFileNameUtf8 = UnicodeToUTF8(m_VideoFileName);
+
+		 m_VideoProcessingVc.open(m_VideoFilePathUtf8);
 
 		 if (m_VideoProcessingVc.isOpened()) {
 			 cv::Mat videoFrame;
@@ -208,14 +208,16 @@ void CMainDialog::OnSelSrcFileFolder(wxCommandEvent& event) {
 			 m_pListCtrl->DeleteAllItems();
 
 			 int nNum = 0;
-			 char NumString[100];
+			 std::wstringstream NumString;
 
 			 m_nVideoFileFrameCnt = m_VideoProcessingVc.get(cv::CAP_PROP_FRAME_COUNT);
 			 for (int i = 0; i < m_nVideoFileFrameCnt; ++i) {
-				 sprintf(NumString, "%d", nNum++);
+				 NumString << std::setw(10) << std::setfill(L'0') << nNum++;
 				 int len = m_pListCtrl->GetItemCount();
-				 long index = m_pListCtrl->InsertItem(len, NumString);
-				 m_pListCtrl->SetItem(index, 1, m_VideoFileName);
+				 long index = m_pListCtrl->InsertItem(len, NumString.str().c_str());
+				 m_pListCtrl->SetItem(index, 1, m_VideoFilePath);
+
+				 NumString.str(L"");
 			 }
 
 			 m_pEndNum->Clear();
@@ -239,7 +241,7 @@ void CMainDialog::OnSelDesFileFolder(wxCommandEvent& event) {
 }
 
 void CMainDialog::OnActivatedFileListCtrl(wxListEvent& event) {
-	int nSel = m_pListCtrl->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+	long nSel = m_pListCtrl->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
 
 	wxString pathNameLc = m_pListCtrl->GetItemText(nSel, 1);
 	m_pListCtrl->SetItemState(nSel, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
@@ -251,13 +253,26 @@ void CMainDialog::OnActivatedFileListCtrl(wxListEvent& event) {
 	*m_pStartNum << nSel;
 
 	if (!bFileMode) {
-		char fileName[256];
-		strcpy(fileName, pathNameLc);
+		std::wstring filename;
+		filename = pathNameLc;
 
 		auto start = std::chrono::steady_clock::now();
 
 		cv::Mat image;
-		image = cv::imread(fileName, cv::IMREAD_COLOR);
+		std::ifstream f(filename, std::iostream::binary);
+
+		if (f.good()) {
+			std::filebuf* pbuf = f.rdbuf();
+			size_t size = pbuf->pubseekoff(0, f.end, f.in);
+			pbuf->pubseekpos(0, f.in);
+
+			std::vector<uchar> buffer(size);
+			pbuf->sgetn((char*)buffer.data(), size);
+
+			image = cv::imdecode(buffer, cv::IMREAD_COLOR);
+
+			f.close();
+		}
 
 #ifndef _KHUCV_SDI
 		CMainFrame* pMainFrame = (CMainFrame*)GetParent();
@@ -270,7 +285,7 @@ void CMainDialog::OnActivatedFileListCtrl(wxListEvent& event) {
 				DisplayImage(image, 0, 0, false, false);
 			}
 			else {
-				NewFileOpen("New Image", image);
+				NewFileOpen(L"New Image", image);
 			}
 #else
 			DisplayImage(image, 0, 0, false, false);
@@ -297,7 +312,7 @@ void CMainDialog::OnActivatedFileListCtrl(wxListEvent& event) {
 					DisplayImage(videoFrame, 0, 0, false, false);
 				}
 				else {
-					NewFileOpen("New Image", videoFrame);
+					NewFileOpen(L"New Image", videoFrame);
 				}
 #else
 				DisplayImage(videoFrame, 0, 0, false, false);
@@ -310,14 +325,15 @@ void CMainDialog::OnActivatedFileListCtrl(wxListEvent& event) {
 void CMainDialog::OnTimer(wxTimerEvent& event) {
 	if (m_bRunPause) return;
 
-	char fileName[256], frameInfo[256];
+	std::wstring filename;
+	std::wstringstream frameInfo;
 	cv::Mat CurrentImage;
 	bool bLoaded = false;;
 
 	if (event.GetId() == ID_TIMER_CAM_RUN) {
 		m_CamProcessingVc >> CurrentImage;
 
-		sprintf(frameInfo, "Cam frame: %5.3lf", m_nProcessingNum/30.);
+		frameInfo << L"Cam frame: " << std::setw(9) << std::setprecision(3) << std::fixed << m_nProcessingNum / 30.;
 
 		if (CurrentImage.empty()) {
 			m_nProcessingNum++;
@@ -326,13 +342,37 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 		}
 
 		if (m_pSaveFrameCheck->GetValue()) {
-			char SaveFileName[256];
+			if (m_nProcessingNum == 0) {
+				time_t curTime = time(nullptr);
+				struct tm* pLocal = localtime(&curTime);
 
-			char FolderName[256];
-			strcpy(FolderName, m_pDisplayDesPathText->GetLabelText());
+				std::wstringstream ss;
+				ss
+					<< (1900 + pLocal->tm_year)
+					<< std::setfill(L'0') << std::setw(2) << (pLocal->tm_mon + 1)
+					<< std::setfill(L'0') << std::setw(2) << pLocal->tm_mday << L'_'
+					<< std::setfill(L'0') << std::setw(2) << pLocal->tm_hour
+					<< std::setfill(L'0') << std::setw(2) << pLocal->tm_min
+					<< std::setfill(L'0') << std::setw(2) << pLocal->tm_sec << L'_';
 
-			sprintf(SaveFileName, "%s/frame%05d.jpg", FolderName, m_nProcessingNum);
-			cv::imwrite(SaveFileName, CurrentImage);
+				m_strSaveFileNameHeader = ss.str();
+			}
+
+			std::wstringstream SaveFileName;
+
+			std::wstring FolderName;
+			FolderName = m_pDisplayDesPathText->GetLabelText();
+
+			SaveFileName << FolderName << L"/" << m_strSaveFileNameHeader.c_str() << L"frame" << std::setw(10) << std::setfill(L'0') << m_nProcessingNum << L".jpg";
+
+			std::vector<uchar> buffer;
+			cv::imencode(".jpg", CurrentImage, buffer);
+
+			std::ofstream f(SaveFileName.str(), std::iostream::binary);
+			if (f.good()) {
+				f.write((char*)buffer.data(), buffer.size());
+				f.close();
+			}
 		}
 
 		bLoaded = true;
@@ -344,7 +384,7 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 
 		if (m_nProcessingNum >= m_pListCtrl->GetItemCount() || m_nProcessingNum > nEnd) {
 			m_bRunTimer = false;
-			m_pRunButton->SetLabelText("Run");
+			m_pRunButton->SetLabelText(L"Run");
 			m_SequenceRunTimer.Stop();
 			return;
 		}
@@ -353,9 +393,22 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 		m_pListCtrl->SetItemState(m_nProcessingNum, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
 		m_pListCtrl->EnsureVisible(m_nProcessingNum);
 
-		strcpy(fileName, pathNameLc);
+		filename = pathNameLc;
 
-		CurrentImage = cv::imread(fileName, cv::IMREAD_COLOR);
+		std::ifstream f(filename, std::iostream::binary);
+
+		if (f.good()) {
+			std::filebuf* pbuf = f.rdbuf();
+			size_t size = pbuf->pubseekoff(0, f.end, f.in);
+			pbuf->pubseekpos(0, f.in);
+
+			std::vector<uchar> buffer(size);
+			pbuf->sgetn((char*)buffer.data(), size);
+
+			CurrentImage = cv::imdecode(buffer, cv::IMREAD_COLOR);
+
+			f.close();
+		}
 
 		if (CurrentImage.empty()) {
 			m_nProcessingNum++;
@@ -372,7 +425,7 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 
 		if (m_nProcessingNum >= m_pListCtrl->GetItemCount() || m_nProcessingNum > nEnd) {
 			m_bRunTimer = false;
-			m_pRunButton->SetLabelText("Run");
+			m_pRunButton->SetLabelText(L"Run");
 			m_VideoRunTimer.Stop();
 			return;
 		}
@@ -389,7 +442,7 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 
 			m_VideoProcessingVc >> CurrentImage;
 
-			sprintf(frameInfo, "Video frame: %5.3lf", m_nProcessingNum/videoFPS);
+			frameInfo << L"Video frame: " << std::setw(9) << std::setprecision(3) << std::fixed << m_nProcessingNum / videoFPS;
 
 			if (CurrentImage.empty()) {
 				m_nProcessingNum++;
@@ -398,13 +451,40 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 			}
 
 			if (m_pSaveFrameCheck->GetValue()) {
-				char SaveFileName[256];
+				if (m_nProcessingNum == 0) {
+					time_t curTime = time(nullptr);
+					struct tm* pLocal = localtime(&curTime);
 
-				char FolderName[256];
-				strcpy(FolderName, m_pDisplayDesPathText->GetLabelText());
+					wchar_t VideoFileStem[256] = { 0 };
+					wcsncpy(VideoFileStem, m_VideoFileName.c_str(), wcslen(m_VideoFileName.c_str()) - 4);
 
-				sprintf(SaveFileName, "%s/frame%05d.jpg", FolderName, m_nProcessingNum);
-				cv::imwrite(SaveFileName, CurrentImage);
+					std::wstringstream ss;
+					ss	<< VideoFileStem <<L'_'
+						<< (1900 + pLocal->tm_year)
+						<< std::setfill(L'0') << std::setw(2) << (pLocal->tm_mon + 1)
+						<< std::setfill(L'0') << std::setw(2) << pLocal->tm_mday << L'_'
+						<< std::setfill(L'0') << std::setw(2) << pLocal->tm_hour
+						<< std::setfill(L'0') << std::setw(2) << pLocal->tm_min
+						<< std::setfill(L'0') << std::setw(2) << pLocal->tm_sec << L'_';
+
+					m_strSaveFileNameHeader = ss.str();
+				}
+
+				std::wstringstream SaveFileName;
+
+				std::wstring FolderName;
+				FolderName = m_pDisplayDesPathText->GetLabelText();
+
+				SaveFileName << FolderName << L"/" << m_strSaveFileNameHeader.c_str() << L"frame" << std::setw(10) << std::setfill(L'0') << m_nProcessingNum << L".jpg";
+
+				std::vector<uchar> buffer;
+				cv::imencode(".jpg", CurrentImage, buffer);
+
+				std::ofstream f(SaveFileName.str(), std::iostream::binary);
+				if (f.good()) {
+					f.write((char*)buffer.data(), buffer.size());
+					f.close();
+				}
 			}
 
 			bLoaded = true;
@@ -423,7 +503,7 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 				DisplayImage(CurrentImage, 0, 0, false, true);
 			}
 			else {
-				NewFileOpen("New Image", CurrentImage);
+				NewFileOpen(L"New Image", CurrentImage);
 			}
 #else
 			DisplayImage(CurrentImage, 0, 0, false, true);
@@ -444,25 +524,25 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 			if (!Output.empty()) DisplayImage(Output, CurrentImage.cols, 0, false, true);
 			
 			if (event.GetId() == ID_TIMER_CAM_RUN) {
-				DlgPrintf("%05d: %s, %10.5lfms, %7dx%4d", m_nProcessingNum, frameInfo, processingTime, CurrentImage.cols, CurrentImage.rows);
+				DlgPrintf(L"%05d: %ls, %10.5lfms, %7dx%4d", m_nProcessingNum, frameInfo.str().c_str(), processingTime, CurrentImage.cols, CurrentImage.rows);
 			}
 			else if (event.GetId() == ID_TIMER_SEQUENCE_RUN) {
-				DlgPrintf("%05d: %s, %10.5lfms, %7dx%4d", m_nProcessingNum, fileName, processingTime, CurrentImage.cols, CurrentImage.rows);
+				DlgPrintf(L"%05d: %ls, %10.5lfms, %7dx%4d", m_nProcessingNum, filename.c_str(), processingTime, CurrentImage.cols, CurrentImage.rows);
 			}
 			else if (event.GetId() == ID_TIMER_VIDEO_RUN) {
-				DlgPrintf("%05d: %s, %10.5lfms, %7dx%4d", m_nProcessingNum, frameInfo, processingTime, CurrentImage.cols, CurrentImage.rows);
+				DlgPrintf(L"%05d: %ls, %10.5lfms, %7dx%4d", m_nProcessingNum, frameInfo.str().c_str(), processingTime, CurrentImage.cols, CurrentImage.rows);
 			}
 		}
 		else
 		{
 			if (event.GetId() == ID_TIMER_CAM_RUN) {
-				DlgPrintf("%05d: %s - load error", m_nProcessingNum, frameInfo);
+				DlgPrintf(L"%05d: %ls - load error", m_nProcessingNum, frameInfo.str().c_str());
 			}
 			else if (event.GetId() == ID_TIMER_SEQUENCE_RUN) {
-				DlgPrintf("%05d: %s - load error", m_nProcessingNum, fileName);
+				DlgPrintf(L"%05d: %ls - load error", m_nProcessingNum, filename.c_str());
 			}
 			else if (event.GetId() == ID_TIMER_VIDEO_RUN) {
-				DlgPrintf("%05d: %s - load error", m_nProcessingNum, frameInfo);
+				DlgPrintf(L"%05d: %ls - load error", m_nProcessingNum, frameInfo.str().c_str());
 			}
 		}
 
@@ -499,13 +579,13 @@ void CMainDialog::OnRun(wxCommandEvent& event) {
 				m_bRunPause = false;
 
 				m_bFirstRun = true;
-				m_pRunButton->SetLabelText("Stop");
+				m_pRunButton->SetLabelText(L"Stop");
 				m_CamRunTimer.Start(10);
 			}
 		}
 		else {
 			m_bRunTimer = false;
-			m_pRunButton->SetLabelText("Run");
+			m_pRunButton->SetLabelText(L"Run");
 			m_CamRunTimer.Stop();
 
 			m_CamProcessingVc.release();
@@ -522,18 +602,18 @@ void CMainDialog::OnRun(wxCommandEvent& event) {
 			m_nProcessingNum = nStart;
 
 			m_bFirstRun = true;
-			m_pRunButton->SetLabelText("Stop");
+			m_pRunButton->SetLabelText(L"Stop");
 			m_SequenceRunTimer.Start(10);
 		}
 		else {
 			m_bRunTimer = false;
-			m_pRunButton->SetLabelText("Run");
+			m_pRunButton->SetLabelText(L"Run");
 			m_SequenceRunTimer.Stop();
 		}
 	}
 	else {
 		if (!m_bRunTimer) {
-			m_VideoProcessingVc.open(m_VideoFileName);
+			m_VideoProcessingVc.open(m_VideoFilePathUtf8);
 
 			int nStart = 0;
 			m_pStartNum->GetLineText(0).ToInt(&nStart, 10);
@@ -550,13 +630,13 @@ void CMainDialog::OnRun(wxCommandEvent& event) {
 				m_bRunPause = false;
 				m_bFirstRun = true;
 
-				m_pRunButton->SetLabelText("Stop");
+				m_pRunButton->SetLabelText(L"Stop");
 				m_VideoRunTimer.Start(10);
 			}
 		}
 		else {
 			m_bRunTimer = false;
-			m_pRunButton->SetLabelText("Run");
+			m_pRunButton->SetLabelText(L"Run");
 			m_VideoRunTimer.Stop();
 		}
 	}
@@ -579,6 +659,8 @@ void CMainDialog::OnExample(wxCommandEvent& event) {
 
 	DisplayImage(img_threshold, kcImage.pos.x + kcImage.cvImage.cols, kcImage.pos.y, true, false);
 	DisplayImage(img_labels, kcImage.pos.x + kcImage.cvImage.cols * 2, kcImage.pos.y, true, false);
+
+	
 }
 
 #ifndef _KHUCV_SDI

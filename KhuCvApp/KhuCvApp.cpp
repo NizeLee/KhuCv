@@ -1,19 +1,9 @@
 //  KhuCvApp.cpp: implementation of CKhuCvApp
 //	Dept. Software Convergence, Kyung Hee University
 //	Prof. Daeho Lee, nize@khu.ac.kr
-//
+//	KhuCv App ver. 1.0.2.0
 
 #include "KhuCvApp.h"
-
-#ifdef _MSC_VER
-#ifdef _DEBUG
-#define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
-#include <crtdbg.h>
-#define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
-#define new DEBUG_NEW
-#endif
-#endif
 
 #include <wx/display.h>
 
@@ -79,7 +69,7 @@ CKhuCvApp::~CKhuCvApp() {
 IMPLEMENT_APP(CKhuCvApp)
 
 #ifndef _KHUCV_SDI
-void NewFileOpen(const char* fileName, cv::Mat cvImage, int nPosX, int nPosY) {
+void NewFileOpen(const wchar_t* fileName, cv::Mat cvImage, int nPosX, int nPosY) {
 #ifndef _KHUCV_SDI
     CMainFrame* pMainFrame = wxGetApp().m_pMainFrame;
     CChildFrame* pParentFrame = new CChildFrame(pMainFrame, wxID_ANY, fileName);
@@ -137,7 +127,7 @@ void DisplayImage(cv::Mat cvImage, int nPosX, int nPosY, bool bErase, bool bClea
     }
 
     pParentFrame->m_ImageList.push_back(kcImage);
-    pParentFrame->m_pClientView->m_nLastSelImageNum = pParentFrame->m_ImageList.size()-1;
+    pParentFrame->m_pClientView->m_nLastSelImageNum = (int)pParentFrame->m_ImageList.size()-1;
     pParentFrame->m_pClientView->Refresh(bErase);
     pParentFrame->m_pClientView->Update();
 }
@@ -174,13 +164,14 @@ CMainDialog* GetMainDialog() {
     return wxGetApp().m_pMainDialog;
 }
 
-void DlgPrintf(const char* ptr, ...) {
+void DlgPrintf(const wchar_t* ptr, ...) {
     unsigned int Num;
 
-    char ach[1024];
+    wchar_t ach[1024];
     va_list args;
     va_start(args, ptr);
-    vsnprintf(ach, 1024, ptr, args);
+    vswprintf(ach, 1024, ptr, args);
+    va_end(args);
 
     wxString msg = ach;
 #ifndef _KHUCV_SDI
@@ -211,7 +202,7 @@ void DlgPrintf(const char* ptr, ...) {
 #endif
 }
 
-void DrawTextOnImage(cv::Mat& cvImage, const std::string& str, int x, int y, unsigned char R, unsigned char G, unsigned char B, int pointSize) {
+void DrawTextOnImage(cv::Mat& cvImage, const std::wstring& str, int x, int y, unsigned char R, unsigned char G, unsigned char B, int pointSize) {
     cv::Mat rgbImage;
     int nW = cvImage.cols;
     int nH = cvImage.rows;
@@ -244,4 +235,51 @@ void DrawTextOnImage(cv::Mat& cvImage, const std::string& str, int x, int y, uns
 
     rgbImage = cv::Mat(nH, nW, CV_8UC3, wx_Image.GetData(), nW * 3);
     cv::cvtColor(rgbImage, cvImage, cv::COLOR_RGB2BGR);
+}
+
+std::string UnicodeToUTF8(const std::wstring& ws) {
+    std::string s;
+    for (int i = 0; i < ws.size(); ++i) {
+        wchar_t wc = ws[i];
+        if (0 <= wc && wc <= 0x7f)
+        {
+            s += (char)wc;
+        }
+        else if (0x80 <= wc && wc <= 0x7ff)
+        {
+            s += (0xc0 | (wc >> 6));
+            s += (0x80 | (wc & 0x3f));
+        }
+        else if (0x800 <= wc && wc <= 0xffff)
+        {
+            s += (0xe0 | (wc >> 12));
+            s += (0x80 | ((wc >> 6) & 0x3f));
+            s += (0x80 | (wc & 0x3f));
+        }
+        else if (0x10000 <= wc && wc <= 0x1fffff)
+        {
+            s += (0xf0 | (wc >> 18));
+            s += (0x80 | ((wc >> 12) & 0x3f));
+            s += (0x80 | ((wc >> 6) & 0x3f));
+            s += (0x80 | (wc & 0x3f));
+        }
+        else if (0x200000 <= wc && wc <= 0x3ffffff)
+        {
+            s += (0xf8 | (wc >> 24));
+            s += (0x80 | ((wc >> 18) & 0x3f));
+            s += (0x80 | ((wc >> 12) & 0x3f));
+            s += (0x80 | ((wc >> 6) & 0x3f));
+            s += (0x80 | (wc & 0x3f));
+        }
+        else if (0x4000000 <= wc && wc <= 0x7fffffff)
+        {
+            s += (0xfc | (wc >> 30));
+            s += (0x80 | ((wc >> 24) & 0x3f));
+            s += (0x80 | ((wc >> 18) & 0x3f));
+            s += (0x80 | ((wc >> 12) & 0x3f));
+            s += (0x80 | ((wc >> 6) & 0x3f));
+            s += (0x80 | (wc & 0x3f));
+        }
+    }
+    return s;
 }

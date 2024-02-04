@@ -1,20 +1,10 @@
 //  MainFrame.cpp: implementation of CMainFrame (parent frame of multiple document interface)
 //	Dept. Software Convergence, Kyung Hee University
 //	Prof. Daeho Lee, nize@khu.ac.kr
-//
+//	KhuCv App ver. 1.0.2.0
 
 #include "KhuCvApp.h"
 #include "Logo.h"
-
-#ifdef _MSC_VER
-#ifdef _DEBUG
-#define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
-#include <crtdbg.h>
-#define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
-#define new DEBUG_NEW
-#endif
-#endif
 
 #ifndef _KHUCV_SDI
 BEGIN_EVENT_TABLE(CMainFrame, wxMDIParentFrame)
@@ -66,7 +56,7 @@ CMainFrame::CMainFrame(const wxString& title)
     wxMenu* menuFile = new wxMenu;
     wxMenu* menuRecent = new wxMenu;
     menuFile->Append(IDM_OPEN, "&Open File...\tCtrl+O");
-    menuFile->Append(IDM_SAVE, "&Open Save...\tCtrl+S");
+    menuFile->Append(IDM_SAVE, "&Save Image...\tCtrl+S");
     menuFile->AppendSubMenu(menuRecent, "Open Recent");
     menuFile->AppendSeparator();
     menuFile->Append(ID_QUIT, "&Quit");
@@ -144,14 +134,27 @@ void CMainFrame::OnDropFiles(wxDropFilesEvent& event) {
     for(int i = 0 ; i < event.GetNumberOfFiles() ; ++i) {
         wxFileName wxFileNameIst(files[i]);
     
-        char filePath[256], fileName[256];
-        strcpy(filePath, files[i]);
-        strcpy(fileName, wxFileNameIst.GetFullName());
-        cv::Mat cvImage = cv::imread(filePath, cv::IMREAD_COLOR);
+        std::wstring filePath;
+        filePath = files[i];
+        std::wstring fileName = (const wchar_t *)wxFileNameIst.GetFullName();
+        std::ifstream f(filePath, std::iostream::binary);
+        cv::Mat cvImage;
+        if (f.good()) {
+            std::filebuf* pbuf = f.rdbuf();
+            size_t size = pbuf->pubseekoff(0, f.end, f.in);
+            pbuf->pubseekpos(0, f.in);
+
+            std::vector<uchar> buffer(size);
+            pbuf->sgetn((char*)buffer.data(), size);
+
+            cvImage = cv::imdecode(buffer, cv::IMREAD_COLOR);
+
+            f.close();
+        }
 
         if (!cvImage.empty()) {
 #ifndef _KHUCV_SDI
-            NewFileOpen(fileName, cvImage);
+            NewFileOpen(fileName.c_str(), cvImage);
 #else
             DisplayImage(cvImage, 0, 0, false, false);
 #endif
@@ -218,7 +221,7 @@ public:
         dc.SetBackgroundMode(wxTRANSPARENT);
         dc.SetTextForeground(*wxBLACK);
         dc.SetTextBackground(*wxWHITE);
-        dc.DrawText(wxString("KhuCv App ver. 1.0.0.0\n(Open development SW for computer vision)\nCopyright(c) 2022, \nDaeho Lee, Kyung Hee University"), 
+        dc.DrawText(wxString(L"KhuCv App ver. 1.0.2.0\n(Open development SW for computer vision)\nCopyright(c) 2022, \nDaeho Lee, Kyung Hee University"), 
             30, 100);
     }
 
@@ -244,23 +247,38 @@ void CMainFrame::OnAbout(wxCommandEvent& event) {
     CAboutDialog dlg(this, wxID_ANY, wxString("KhuCv App"), Pos, wxSize(425, 300), wxDEFAULT_DIALOG_STYLE);
     dlg.ShowModal();
 
-    //wxMessageBox(wxT("KhuCv App ver. 1.0.0.0\n(Open development SW for computer vision)\nCopyright(c) 2022, \nDaeho Lee, Kyung Hee University"), wxT("KhuCv App"), wxICON_INFORMATION);
+    //wxMessageBox(wxT("KhuCv App ver. 1.0.1.0\n(Open development SW for computer vision)\nCopyright(c) 2022, \nDaeho Lee, Kyung Hee University"), wxT("KhuCv App"), wxICON_INFORMATION);
 }
 
 void CMainFrame::OnFileOpen(wxCommandEvent& event)
 {
-    wxFileDialog openFileDialog(this, "Open Image file", "", "",
-            "Jpeg files (*.jpg)|*.jpg|Bmp files(*.bmp)|*.bmp|Gif files(*.gif)|*.gif|All files(*.*)|*.*", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+    wxFileDialog openFileDialog(this, L"Open Image file", L"", L"",
+            L"Jpeg files (*.jpg)|*.jpg|Bmp files(*.bmp)|*.bmp|Gif files(*.gif)|*.gif|All files(*.*)|*.*", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
     if (openFileDialog.ShowModal() == wxID_CANCEL) return; 
 
-    char filePath[256], fileName[256];
-    strcpy(filePath, openFileDialog.GetPath());
-    strcpy(fileName, openFileDialog.GetFilename());
-    cv::Mat cvImage = cv::imread(filePath, cv::IMREAD_COLOR);
+    std::wstring filePath, fileName;
+    filePath = openFileDialog.GetPath();
+    fileName = openFileDialog.GetFilename();
+
+    cv::Mat cvImage;
+    std::ifstream f(filePath, std::iostream::binary);
+
+    if (f.good()) {
+        std::filebuf* pbuf = f.rdbuf();
+        size_t size = pbuf->pubseekoff(0, f.end, f.in);
+        pbuf->pubseekpos(0, f.in);
+
+        std::vector<uchar> buffer(size);
+        pbuf->sgetn((char*)buffer.data(), size);
+
+        cvImage = cv::imdecode(buffer, cv::IMREAD_COLOR);
+
+        f.close();
+    }
 
     if (!cvImage.empty()) {
 #ifndef _KHUCV_SDI
-        NewFileOpen(fileName, cvImage);
+        NewFileOpen(fileName.c_str(), cvImage);
 #else
         DisplayImage(cvImage, 0, 0, false, false);
 #endif
@@ -271,17 +289,28 @@ void CMainFrame::OnFileOpen(wxCommandEvent& event)
 
 void CMainFrame::OnFileSave(wxCommandEvent& event)
 {
-    wxFileDialog openFileDialog(this, "Open Image file", "", "",
-        "Jpeg files (*.jpg)|*.jpg|Bmp files(*.bmp)|*.bmp|Gif files(*.gif)|*.gif|All files(*.*)|*.*", wxFD_SAVE | wxFD_FILE_MUST_EXIST);
-    if (openFileDialog.ShowModal() == wxID_CANCEL) return;
+    wxFileDialog saveFileDialog(this, L"Open Image file", L"", L"",
+        L"Jpeg files (*.jpg)|*.jpg|Bmp files(*.bmp)|*.bmp|Gif files(*.gif)|*.gif|All files(*.*)|*.*", wxFD_SAVE);
+    if (saveFileDialog.ShowModal() == wxID_CANCEL) return;
 
-    char filePath[256];
-    strcpy(filePath, openFileDialog.GetPath());
+    std::wstring filePath;
+    filePath = saveFileDialog.GetPath();
     
     CKcImage kcImage = GetLastSelImage();
     if (kcImage.cvImage.empty()) return;
-    
-    cv::imwrite(filePath, kcImage.cvImage);
+    std::vector<uchar> buffer;
+    char ext[5] = { '.', 0 };
+
+    wxFileName wxFileNameIst(saveFileDialog.GetPath());
+    strncpy(&ext[1], wxFileNameIst.GetExt(), 3);
+
+    cv::imencode(ext, kcImage.cvImage, buffer);
+
+    std::ofstream f(filePath, std::iostream::binary);
+    if (f.good()) {
+        f.write((char*)buffer.data(), buffer.size());
+        f.close();
+    }
 }
 
 void CMainFrame::OnRecentFiles(wxCommandEvent & event) {
@@ -289,15 +318,29 @@ void CMainFrame::OnRecentFiles(wxCommandEvent & event) {
 
     if (!FileNameString.empty())
     {
-        char filePath[256], fileName[256];
         wxFileName wxFileNameIst(FileNameString);
-        strcpy(filePath, FileNameString);
-        strcpy(fileName, wxFileNameIst.GetFullName());
-        cv::Mat cvImage = cv::imread(filePath, cv::IMREAD_COLOR);
+
+        std::wstring filePath;
+        filePath = FileNameString;
+        std::wstring fileName = (const wchar_t*)wxFileNameIst.GetFullName();
+        std::ifstream f(filePath, std::iostream::binary);
+        cv::Mat cvImage;
+        if (f.good()) {
+            std::filebuf* pbuf = f.rdbuf();
+            size_t size = pbuf->pubseekoff(0, f.end, f.in);
+            pbuf->pubseekpos(0, f.in);
+
+            std::vector<uchar> buffer(size);
+            pbuf->sgetn((char*)buffer.data(), size);
+
+            cvImage = cv::imdecode(buffer, cv::IMREAD_COLOR);
+
+            f.close();
+        }
 
         if (!cvImage.empty()) {
 #ifndef _KHUCV_SDI
-            NewFileOpen(fileName, cvImage);
+            NewFileOpen(fileName.c_str(), cvImage);
 #else
             DisplayImage(cvImage, 0, 0, false, false);
 #endif
