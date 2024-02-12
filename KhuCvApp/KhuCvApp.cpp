@@ -1,7 +1,7 @@
 //  KhuCvApp.cpp: implementation of CKhuCvApp
 //	Dept. Software Convergence, Kyung Hee University
 //	Prof. Daeho Lee, nize@khu.ac.kr
-//	KhuCv App ver. 1.0.2.0
+//	KhuCv App ver. 1.0.5.0
 
 #include "KhuCvApp.h"
 
@@ -83,7 +83,7 @@ void NewFileOpen(const wchar_t* fileName, cv::Mat cvImage, int nPosX, int nPosY)
 }
 #endif
 
-void DisplayImage(cv::Mat cvImage, int nPosX, int nPosY, bool bErase, bool bClearPos) {
+void DisplayImage(cv::Mat cvImage, int nPosX, int nPosY, bool bErase, bool bClearPos, bool bNormalize) {
 #ifndef _KHUCV_SDI
     CMainFrame* pMainFrame = wxGetApp().m_pMainFrame;
     CChildFrame* pParentFrame = (CChildFrame*)(pMainFrame->GetActiveChild());
@@ -97,7 +97,7 @@ void DisplayImage(cv::Mat cvImage, int nPosX, int nPosY, bool bErase, bool bClea
     if (cvCloneImage.type() != CV_8UC3) {
         if (cvCloneImage.channels() == 1) {
             cv::Mat cvNewImage(cvCloneImage.rows, cvCloneImage.cols, CV_8UC3);
-            cv::normalize(cvCloneImage, cvCloneImage, 0, 255, cv::NORM_MINMAX);
+            if(bNormalize) cv::normalize(cvCloneImage, cvCloneImage, 0, 255, cv::NORM_MINMAX);
             cvCloneImage.convertTo(cvCloneImage, CV_8UC1);
             cv::cvtColor(cvCloneImage, cvNewImage, cv::COLOR_GRAY2BGR);
             kcImage = CKcImage(cvNewImage, wxPoint(nPosX, nPosY));
@@ -108,7 +108,7 @@ void DisplayImage(cv::Mat cvImage, int nPosX, int nPosY, bool bErase, bool bClea
 
             cv::split(cvCloneImage, BGR);
             for(int i = 0 ; i < 3 ; ++i) {
-                //cv::normalize(BGR[i], BGR[i], 0, 255, cv::NORM_MINMAX);
+                if(bNormalize) cv::normalize(BGR[i], BGR[i], 0, 255, cv::NORM_MINMAX);
                 BGR[i].convertTo(BGR[i], CV_8UC1);
             }
             cv::merge(BGR, 3, cvNewImage);
@@ -118,8 +118,10 @@ void DisplayImage(cv::Mat cvImage, int nPosX, int nPosY, bool bErase, bool bClea
         else
             return;
     }
-    else
+    else {
+        if (bNormalize) cv::normalize(cvCloneImage, cvCloneImage, 0, 255, cv::NORM_MINMAX);
         kcImage = CKcImage(cvCloneImage, wxPoint(nPosX, nPosY));
+    }
 
     if(bClearPos) {
         auto NewEnd = std::remove_if(pParentFrame->m_ImageList.begin(), pParentFrame->m_ImageList.end(), [=](CKcImage kcImage){return kcImage.pos == wxPoint(nPosX, nPosY);});
@@ -132,7 +134,7 @@ void DisplayImage(cv::Mat cvImage, int nPosX, int nPosY, bool bErase, bool bClea
     pParentFrame->m_pClientView->Update();
 }
 
-CKcImage GetLastSelImage() {
+CKcImage GetLastSelImage(int nLastIndex) {
 #ifndef _KHUCV_SDI
     CMainFrame* pMainFrame = wxGetApp().m_pMainFrame;
     CChildFrame* pParentFrame = (CChildFrame*)(pMainFrame->GetActiveChild());
@@ -140,19 +142,19 @@ CKcImage GetLastSelImage() {
     CMainFrame* pParentFrame = wxGetApp().m_pMainFrame;
 #endif
 
-    int nCurrentGrabImageNum = pParentFrame->m_pClientView->m_nLastSelImageNum;
+    int nCurrentGrabImageNum = pParentFrame->m_pClientView->m_nLastSelImageNum - nLastIndex;
 
     if (nCurrentGrabImageNum < 0) {
 
-        if(pParentFrame->m_ImageList.size() > 0)
-            return pParentFrame->m_ImageList[pParentFrame->m_ImageList.size()-1];
+        if(pParentFrame->m_ImageList.size() > nLastIndex)
+            return pParentFrame->m_ImageList[pParentFrame->m_ImageList.size() - 1 - nLastIndex];
 
         return CKcImage();
     }
     else if (nCurrentGrabImageNum >= pParentFrame->m_ImageList.size()) {
 
-        if (pParentFrame->m_ImageList.size() > 0)
-            return pParentFrame->m_ImageList[pParentFrame->m_ImageList.size() - 1];
+        if (pParentFrame->m_ImageList.size() > nLastIndex)
+            return pParentFrame->m_ImageList[pParentFrame->m_ImageList.size() - 1 - nLastIndex];
 
         return CKcImage();
     }
@@ -174,6 +176,47 @@ void DlgPrintf(const wchar_t* ptr, ...) {
     va_end(args);
 
     wxString msg = ach;
+#ifndef _KHUCV_SDI
+    CMainFrame* pMainFrame = wxGetApp().m_pMainFrame;
+
+    Num = pMainFrame->GetPrintListBox()->GetCount();
+    pMainFrame->GetPrintListBox()->InsertItems(1, &msg, Num);
+    pMainFrame->GetPrintListBox()->SetSelection(Num);
+#else
+    if (wxGetApp().m_pMainDialog) {
+        CMainDialog* pMainDialog = wxGetApp().m_pMainDialog;
+
+        while (wxGetApp().m_PrintVector.size() > 0) {
+            for (auto msg : wxGetApp().m_PrintVector) {
+                Num = pMainDialog->GetPrintListBox()->GetCount();
+                pMainDialog->GetPrintListBox()->InsertItems(1, &msg, Num);
+                pMainDialog->GetPrintListBox()->SetSelection(Num);
+            }
+            wxGetApp().m_PrintVector.clear();
+        }
+        Num = pMainDialog->GetPrintListBox()->GetCount();
+        pMainDialog->GetPrintListBox()->InsertItems(1, &msg, Num);
+        pMainDialog->GetPrintListBox()->SetSelection(Num);
+    }
+    else {
+        wxGetApp().m_PrintVector.push_back(msg);
+    }
+#endif
+}
+
+void DlgPrintf(const char* ptr, ...) {
+    unsigned int Num;
+
+    char ach[1024];
+    va_list args;
+    va_start(args, ptr);
+    vsnprintf(ach, 1024, ptr, args);
+    va_end(args);
+
+    std::string camBackend = ach;
+    std::wstring camBackendw;
+    camBackendw.assign(camBackend.begin(), camBackend.end());
+    wxString msg = camBackendw.c_str();
 #ifndef _KHUCV_SDI
     CMainFrame* pMainFrame = wxGetApp().m_pMainFrame;
 

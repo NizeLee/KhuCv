@@ -1,7 +1,7 @@
 //  MainDialog.h: interface of CMainDialog (main dialog of KhuCvApp)
 //	Dept. Software Convergence, Kyung Hee University
 //	Prof. Daeho Lee, nize@khu.ac.kr
-//	KhuCv App ver. 1.0.2.0
+//	KhuCv App ver. 1.0.5.0
 
 #pragma once
 
@@ -41,7 +41,15 @@ public:
 	wxCheckBox* m_pStepCheck;
 	wxCheckBox* m_pVerboseCheck;
 	
-	wxButton* m_pExampleButton;
+	wxButton* m_pReverseButton;
+	wxButton* m_pAddButton;
+	wxButton* m_pHistogramButton;
+	wxButton* m_pThreLabelingButton;
+	wxButton* m_pExample1Button;
+	wxButton* m_pExample2Button;
+	wxButton* m_pExample3Button;
+	wxButton* m_pExample4Button;
+	wxButton* m_pExample5Button;
 #ifndef _KHUCV_SDI
 #else
 	wxListBox* m_pPrintListBox;
@@ -77,7 +85,15 @@ public:
 	void OnTimer(wxTimerEvent& event);
 	void OnRun(wxCommandEvent& event);
 	void OnPause(wxCommandEvent& event);
-	void OnExample(wxCommandEvent& event);
+	void OnReverse(wxCommandEvent& event);
+	void OnAddImages(wxCommandEvent& event);
+	void OnHistogram(wxCommandEvent& event);
+	void OnLabeling(wxCommandEvent& event);
+	void OnExample1(wxCommandEvent& event);
+	void OnExample2(wxCommandEvent& event);
+	void OnExample3(wxCommandEvent& event);
+	void OnExample4(wxCommandEvent& event);
+	void OnExample5(wxCommandEvent& event);
 
 	DECLARE_EVENT_TABLE();
 };

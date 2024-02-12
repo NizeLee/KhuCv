@@ -1,7 +1,7 @@
 //  MainDialog.cpp: implementation of CMainDialog (main dialog of KhuCvApp)
 //	Dept. Software Convergence, Kyung Hee University
 //	Prof. Daeho Lee, nize@khu.ac.kr
-//	KhuCv App ver. 1.0.2.0
+//	KhuCv App ver. 1.0.5.0
 
 #include "KhuCvApp.h"
 
@@ -13,7 +13,15 @@ EVT_BUTTON(IDC_SEL_DES_FOLDER, CMainDialog::OnSelDesFileFolder)
 EVT_LIST_ITEM_ACTIVATED(IDC_FILE_LIST_CTRL, CMainDialog::OnActivatedFileListCtrl)
 EVT_BUTTON(IDC_RUN, CMainDialog::OnRun)
 EVT_BUTTON(IDC_PAUSE, CMainDialog::OnPause)
-EVT_BUTTON(IDC_EXAMPLE, CMainDialog::OnExample)
+EVT_BUTTON(IDC_REVERSE, CMainDialog::OnReverse)
+EVT_BUTTON(IDC_ADD_IMAGES, CMainDialog::OnAddImages)
+EVT_BUTTON(IDC_HISTOGRAM, CMainDialog::OnHistogram)
+EVT_BUTTON(IDC_LABDELING, CMainDialog::OnLabeling)
+EVT_BUTTON(IDC_EXAMPLE1, CMainDialog::OnExample1)
+EVT_BUTTON(IDC_EXAMPLE2, CMainDialog::OnExample2)
+EVT_BUTTON(IDC_EXAMPLE3, CMainDialog::OnExample3)
+EVT_BUTTON(IDC_EXAMPLE4, CMainDialog::OnExample4)
+EVT_BUTTON(IDC_EXAMPLE5, CMainDialog::OnExample5)
 EVT_TIMER(-1, CMainDialog::OnTimer)
 END_EVENT_TABLE()
 
@@ -69,10 +77,11 @@ CMainDialog::CMainDialog(wxWindow* parent, wxWindowID id, const wxString& title,
 			break;
 		}
 		std::string camBackend = camera.getBackendName().c_str();
-		std::wstring camBackendw;
-		camBackendw.assign(camBackend.begin(), camBackend.end());
+		//std::wstring camBackendw;
+		//camBackendw.assign(camBackend.begin(), camBackend.end());
 
-		DlgPrintf(L"WebCam(%d): %ls", device_counts, camBackendw.c_str());
+		//DlgPrintf(L"WebCam(%d): %ls", device_counts, camBackend.c_str());
+		DlgPrintf("WebCam(%d): %s", device_counts, camBackend.c_str());
 		device_counts++;
 		camera.release();
 	}
@@ -100,8 +109,25 @@ CMainDialog::CMainDialog(wxWindow* parent, wxWindowID id, const wxString& title,
 	m_pHbox[4]->Add(m_pStepCheck, 1, wxLEFT, 5);
 	m_pHbox[4]->Add(m_pVerboseCheck, 0, wxLEFT, 5);
 
-	m_pExampleButton = new wxButton(this, IDC_EXAMPLE, wxT("Example"), wxDefaultPosition, wxSize(70, 20));
-	m_pHbox[5]->Add(m_pExampleButton, 1);
+	m_pReverseButton = new wxButton(this, IDC_REVERSE, wxT("Reverse"), wxDefaultPosition, wxSize(50, 20));
+	m_pAddButton = new wxButton(this, IDC_ADD_IMAGES, wxT("Add"), wxDefaultPosition, wxSize(30, 20));
+	m_pHistogramButton = new wxButton(this, IDC_HISTOGRAM, wxT("Histogram"), wxDefaultPosition, wxSize(70, 20));
+	m_pThreLabelingButton = new wxButton(this, IDC_LABDELING, wxT("Labeling"), wxDefaultPosition, wxSize(70, 20));
+	m_pExample1Button = new wxButton(this, IDC_EXAMPLE1, wxT("Ex1"), wxDefaultPosition, wxSize(30, 20));
+	m_pExample2Button = new wxButton(this, IDC_EXAMPLE2, wxT("Ex2"), wxDefaultPosition, wxSize(30, 20));
+	m_pExample3Button = new wxButton(this, IDC_EXAMPLE3, wxT("Ex3"), wxDefaultPosition, wxSize(30, 20));
+	m_pExample4Button = new wxButton(this, IDC_EXAMPLE4, wxT("Ex4"), wxDefaultPosition, wxSize(30, 20));
+	m_pExample5Button = new wxButton(this, IDC_EXAMPLE5, wxT("Ex5"), wxDefaultPosition, wxSize(30, 20));
+	
+	m_pHbox[5]->Add(m_pReverseButton, 1);
+	m_pHbox[5]->Add(m_pAddButton, 1, wxLEFT, 5);
+	m_pHbox[5]->Add(m_pHistogramButton, 1, wxLEFT, 5);
+	m_pHbox[5]->Add(m_pThreLabelingButton, 1, wxLEFT, 5);
+	m_pHbox[5]->Add(m_pExample1Button, 0, wxLEFT, 5);
+	m_pHbox[5]->Add(m_pExample2Button, 0, wxLEFT, 5);
+	m_pHbox[5]->Add(m_pExample3Button, 0, wxLEFT, 5);
+	m_pHbox[5]->Add(m_pExample4Button, 0, wxLEFT, 5);
+	m_pHbox[5]->Add(m_pExample5Button, 0, wxLEFT, 5);
 
 	m_pVbox->Add(m_pHbox[0], 1, wxALIGN_CENTER | wxTOP, 5);
 	m_pVbox->Add(m_pHbox[1], 1, wxALIGN_CENTER | wxTOP, 5);
@@ -642,7 +668,90 @@ void CMainDialog::OnRun(wxCommandEvent& event) {
 	}
 }
 
-void CMainDialog::OnExample(wxCommandEvent& event) {
+#ifndef _KHUCV_SDI
+#else
+wxListBox* CMainDialog::GetPrintListBox() const {
+	return m_pPrintListBox;
+}
+#endif
+
+void CMainDialog::OnReverse(wxCommandEvent& event) {
+	CKcImage kcImage = GetLastSelImage();
+	if (kcImage.cvImage.empty()) return;
+
+	cv::Mat cvImage = ~kcImage.cvImage;
+	
+	/*
+	cv::Mat cvImage = kcImage.cvImage.clone()
+	for (int y = 0; y < cvImage.rows; y++)
+		for (int x = 0; x < cvImage.cols; x++) {
+			cvImage.data[y * cvImage.step + x * 3] = ~cvImage.data[y * cvImage.step + x * 3];
+			cvImage.data[y * cvImage.step + x * 3 + 1] = ~cvImage.data[y * cvImage.step + x * 3 + 1];
+			cvImage.data[y * cvImage.step + x * 3 + 2] = ~cvImage.data[y * cvImage.step + x * 3 + 2];
+		}
+	*/
+
+	DisplayImage(cvImage, kcImage.pos.x + kcImage.cvImage.cols, kcImage.pos.y, true, false);
+}
+
+void CMainDialog::OnAddImages(wxCommandEvent& event) {
+	CKcImage kcImage1 = GetLastSelImage();
+	if (kcImage1.cvImage.empty()) return;
+
+	CKcImage kcImage2 = GetLastSelImage(1);
+	if (kcImage2.cvImage.empty()) return;
+
+	cv::Mat cvImage;
+	
+	try {
+		cvImage = kcImage1.cvImage / 2 + kcImage2.cvImage / 2;
+
+		DisplayImage(cvImage, kcImage1.pos.x + kcImage1.cvImage.cols, kcImage1.pos.y, true, false);
+	} 
+	catch (std::exception& e) {
+		DlgPrintf("*** Exception: %s", e.what());
+	}
+}
+
+void CMainDialog::OnHistogram(wxCommandEvent& event) {
+	CKcImage kcImage = GetLastSelImage();
+	if (kcImage.cvImage.empty()) return;
+
+	int hSize = 256;
+	std::vector<int> hist_red(hSize), hist_green(hSize), hist_blue(hSize);
+
+	for (int y = 0; y < kcImage.cvImage.rows; ++y)
+		for (int x = 0; x < kcImage.cvImage.cols; ++x) {
+			unsigned char red = *(kcImage.cvImage.data + y * kcImage.cvImage.step + x * 3 + 2);
+			hist_red[red]++;
+			unsigned char green = *(kcImage.cvImage.data + y * kcImage.cvImage.step + x * 3 + 1);
+			hist_green[green]++;
+			unsigned char blue = *(kcImage.cvImage.data + y * kcImage.cvImage.step + x * 3 + 0);
+			hist_blue[blue]++;
+		}
+
+	int max_hist_red = *std::max_element(hist_red.begin(), hist_red.end());
+	int max_hist_green = *std::max_element(hist_green.begin(), hist_green.end());
+	int max_hist_blue = *std::max_element(hist_blue.begin(), hist_blue.end());
+	int hist_w = 256, hist_h = 100;
+
+	cv::Mat histImgR(hist_h, hist_w, CV_8UC3, cv::Scalar(0, 0, 0)), histImgG(hist_h, hist_w, CV_8UC3, cv::Scalar(0, 0, 0)), histImgB(hist_h, hist_w, CV_8UC3, cv::Scalar(0, 0, 0));
+
+	for (int i = 0; i < hSize; i++) {
+		if (max_hist_red > 0 && hist_red[i] > 0)
+			cv::line(histImgR, { i, hist_h - 1 }, { i, hist_h - hist_red[i] * hist_h / max_hist_red }, cv::Scalar(0, 0, 255));
+		if (max_hist_green > 0 && hist_green[i] > 0)
+			cv::line(histImgG, { i, hist_h - 1 }, { i, hist_h - hist_green[i] * hist_h / max_hist_green }, cv::Scalar(0, 255, 0));
+		if (max_hist_blue > 0 && hist_blue[i] > 0)
+			cv::line(histImgB, { i, hist_h - 1 }, { i, hist_h - hist_blue[i] * hist_h / max_hist_blue }, cv::Scalar(255, 0, 0));
+	}
+
+	DisplayImage(histImgR, kcImage.pos.x + kcImage.cvImage.cols, kcImage.pos.y, true, false);
+	DisplayImage(histImgG, kcImage.pos.x + kcImage.cvImage.cols + hist_w, kcImage.pos.y, true, false);
+	DisplayImage(histImgB, kcImage.pos.x + kcImage.cvImage.cols + hist_w * 2, kcImage.pos.y, true, false);
+}
+
+void CMainDialog::OnLabeling(wxCommandEvent& event) {
 	CKcImage kcImage = GetLastSelImage();
 	if (kcImage.cvImage.empty()) return;
 
@@ -661,9 +770,18 @@ void CMainDialog::OnExample(wxCommandEvent& event) {
 	DisplayImage(img_labels, kcImage.pos.x + kcImage.cvImage.cols * 2, kcImage.pos.y, true, false);
 }
 
-#ifndef _KHUCV_SDI
-#else
-wxListBox* CMainDialog::GetPrintListBox() const {
-	return m_pPrintListBox;
+void CMainDialog::OnExample1(wxCommandEvent& event) {
 }
-#endif
+
+void CMainDialog::OnExample2(wxCommandEvent& event) {
+}
+
+void CMainDialog::OnExample3(wxCommandEvent& event) {
+}
+
+void CMainDialog::OnExample4(wxCommandEvent& event) {
+}
+
+void CMainDialog::OnExample5(wxCommandEvent& event) {
+}
+
