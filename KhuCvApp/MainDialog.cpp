@@ -682,7 +682,7 @@ void CMainDialog::OnReverse(wxCommandEvent& event) {
 	cv::Mat cvImage = ~kcImage.cvImage;
 	
 	/*
-	cv::Mat cvImage = kcImage.cvImage.clone()
+	cv::Mat cvImage = kcImage.cvImage.clone();
 	for (int y = 0; y < cvImage.rows; y++)
 		for (int x = 0; x < cvImage.cols; x++) {
 			cvImage.data[y * cvImage.step + x * 3] = ~cvImage.data[y * cvImage.step + x * 3];
