@@ -764,7 +764,7 @@ void CMainDialog::OnLabeling(wxCommandEvent& event) {
 	threshold(img_gray, img_threshold, 0, 255, cv::THRESH_BINARY + cv::THRESH_OTSU);
 
 	cv::Mat img_labels, stats, centroids;
-	int numOfLables = cv::connectedComponentsWithStats(img_threshold, img_labels, stats, centroids, 8, CV_32S);
+	int numOfLabels = cv::connectedComponentsWithStats(img_threshold, img_labels, stats, centroids, 8, CV_32S);
 
 	DisplayImage(img_threshold, kcImage.pos.x + kcImage.cvImage.cols, kcImage.pos.y, true, false);
 	DisplayImage(img_labels, kcImage.pos.x + kcImage.cvImage.cols * 2, kcImage.pos.y, true, false);
