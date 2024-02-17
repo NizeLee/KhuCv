@@ -299,6 +299,11 @@ void CClientView::OnContextMenu(wxContextMenuEvent& event) {
         m_ContextPoint = ScreenToClient(m_ContextPoint);
     }
 
+    wxPoint ScrolledPosition;
+    CalcScrolledPosition(0, 0, &(ScrolledPosition.x), &(ScrolledPosition.y));
+
+    m_nLastSelImageNum = (int)GetPosImage(m_ContextPoint-ScrolledPosition);
+
     wxMenu* popupMenu = new wxMenu;
 
     popupMenu->Append(IDM_CONTEXT_COPY, "&Copy\tCtrl+C");
@@ -310,11 +315,6 @@ void CClientView::OnContextMenu(wxContextMenuEvent& event) {
     popupMenu->Append(IDM_CONTEXT_SEL_REGION, "Sel Region");
 
     PopupMenu(popupMenu, m_ContextPoint);
-
-    wxPoint ScrolledPosition;
-    CalcScrolledPosition(0, 0, &(ScrolledPosition.x), &(ScrolledPosition.y));
-
-    m_nLastSelImageNum = (int)GetPosImage(m_ContextPoint-ScrolledPosition);
 }
 
 void CClientView::OnCopy(wxCommandEvent& event) {
