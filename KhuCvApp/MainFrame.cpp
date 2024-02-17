@@ -221,7 +221,7 @@ public:
         dc.SetBackgroundMode(wxTRANSPARENT);
         dc.SetTextForeground(*wxBLACK);
         dc.SetTextBackground(*wxWHITE);
-        dc.DrawText(wxString(L"KhuCv App ver. 1.0.2.0\n(Open development SW for computer vision)\nCopyright(c) 2022, \nDaeho Lee, Kyung Hee University"), 
+        dc.DrawText(wxString(L"KhuCv App ver. 1.0.5.0\n(Open development SW for computer vision)\nCopyright(c) 2022, \nDaeho Lee, Kyung Hee University"), 
             30, 100);
     }
 
@@ -247,7 +247,7 @@ void CMainFrame::OnAbout(wxCommandEvent& event) {
     CAboutDialog dlg(this, wxID_ANY, wxString("KhuCv App"), Pos, wxSize(425, 300), wxDEFAULT_DIALOG_STYLE);
     dlg.ShowModal();
 
-    //wxMessageBox(wxT("KhuCv App ver. 1.0.1.0\n(Open development SW for computer vision)\nCopyright(c) 2022, \nDaeho Lee, Kyung Hee University"), wxT("KhuCv App"), wxICON_INFORMATION);
+    //wxMessageBox(wxT("KhuCv App ver. 1.0.5.0\n(Open development SW for computer vision)\nCopyright(c) 2022, \nDaeho Lee, Kyung Hee University"), wxT("KhuCv App"), wxICON_INFORMATION);
 }
 
 void CMainFrame::OnFileOpen(wxCommandEvent& event)
