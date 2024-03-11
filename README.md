@@ -100,7 +100,7 @@
     - [SDI] $ cmake . -D_KHUCV_SDI=True
     - $ make
   + Mac (+Xcode) I
-    - wxWidgets sample: https://wiki.wxwidgets.org/Creating_Xcode_projects_for_wxWidgets_applications)
+    - wxWidgets sample: https://wiki.wxwidgets.org/Creating_Xcode_projects_for_wxWidgets_applications
     - Add source/header files 
     - Add Include and library paths
     - Add opencv libraries
