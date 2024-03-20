@@ -97,7 +97,7 @@
   + Linux (Ubuntu) 
     - $ cd build-linux
     - [MDI] $ cmake .
-    - [SDI] $ cmake . -D_KHUCV_SDI=True
+    - [SDI] $ cmake . -D SDI=True
     - $ make
   + Mac (+Xcode) I
     - wxWidgets sample: https://wiki.wxwidgets.org/Creating_Xcode_projects_for_wxWidgets_applications
@@ -108,7 +108,7 @@
   + Mac II
     - $ cd build-mac
     - [MDI] $ cmake .
-    - [SDI] $ cmake . -D_KHUCV_SDI=True
+    - [SDI] $ cmake . -D SDI=True
     - $ make
 
 [Windows-MDI]
