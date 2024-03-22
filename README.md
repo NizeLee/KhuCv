@@ -15,7 +15,7 @@
 * wxWidgets 3.x
   + Windows (+Visual Studio)
     - Download wxWidgets source code from https://www.wxwidgets.org/downloads/
-    - Open wxWidgets-x.x.x/build/msw/wx_vcxx.sin with Visual Studio and build
+    - Open wxWidgets-x.x.x/build/msw/wx_vcxx.sin with Visual Studio and build (release and debug)
   + Linux (Ubuntu)
     - Install g++-11(Ubuntu 20.04 or below versions, see https://lindevs.com/install-g-on-ubuntu/)
     - Download wxWidgets source code from https://www.wxwidgets.org/downloads/
@@ -80,7 +80,8 @@
   + MDI (multiple-document interface, default), SDI (single-document interface, define _KHUCV_SDI)
   + Windows (+Visual Studio) I
     - Make new desktop empty project (wxWidgets sample: https://wiki.wxwidgets.org/Microsoft_Visual_C%2B%2B_Guide)
-    - Add source/header files 
+    - Add source/header files
+    - Set C++ Language Standard: ISO C++17 Standard (/std:c++17)
     - Add Include and library paths
     - Add opencv_world4xx.lib to Additional Dependencies
     - Build
