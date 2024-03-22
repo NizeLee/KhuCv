@@ -1,7 +1,7 @@
 //  ClientView.h: interface of CClientView (client view of child frame)
 //	Dept. Software Convergence, Kyung Hee University
 //	Prof. Daeho Lee, nize@khu.ac.kr
-//	KhuCv App ver. 1.0.5.0
+//	KhuCv App ver. 1.0.6.0
 
 #pragma once
 

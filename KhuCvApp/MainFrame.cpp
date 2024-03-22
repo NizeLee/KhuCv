@@ -1,7 +1,7 @@
 //  MainFrame.cpp: implementation of CMainFrame (parent frame of multiple document interface)
 //	Dept. Software Convergence, Kyung Hee University
 //	Prof. Daeho Lee, nize@khu.ac.kr
-//	KhuCv App ver. 1.0.5.0
+//	KhuCv App ver. 1.0.6.0
 
 #include "KhuCvApp.h"
 #include "Logo.h"
@@ -137,17 +137,22 @@ void CMainFrame::OnDropFiles(wxDropFilesEvent& event) {
         std::wstring filePath;
         filePath = files[i];
         std::wstring fileName = (const wchar_t *)wxFileNameIst.GetFullName();
-        std::ifstream f(filePath, std::iostream::binary);
+        std::ifstream f(std::filesystem::path(filePath), std::iostream::binary);
         cv::Mat cvImage;
         if (f.good()) {
-            std::filebuf* pbuf = f.rdbuf();
-            size_t size = pbuf->pubseekoff(0, f.end, f.in);
-            pbuf->pubseekpos(0, f.in);
+            try{
+                std::filebuf* pbuf = f.rdbuf();
+                size_t size = pbuf->pubseekoff(0, f.end, f.in);
+                pbuf->pubseekpos(0, f.in);
 
-            std::vector<uchar> buffer(size);
-            pbuf->sgetn((char*)buffer.data(), size);
+                std::vector<uchar> buffer(size);
+                pbuf->sgetn((char*)buffer.data(), size);
 
-            cvImage = cv::imdecode(buffer, cv::IMREAD_COLOR);
+                cvImage = cv::imdecode(buffer, cv::IMREAD_COLOR);
+            }
+            catch (std::exception& e) {
+                DlgPrintf("*** Exception: %s", e.what());
+            }
 
             f.close();
         }
@@ -221,7 +226,7 @@ public:
         dc.SetBackgroundMode(wxTRANSPARENT);
         dc.SetTextForeground(*wxBLACK);
         dc.SetTextBackground(*wxWHITE);
-        dc.DrawText(wxString(L"KhuCv App ver. 1.0.5.0\n(Open development SW for computer vision)\nCopyright(c) 2022, \nDaeho Lee, Kyung Hee University"), 
+        dc.DrawText(wxString(L"KhuCv App ver. 1.0.6.0\n(Open development SW for computer vision)\nCopyright(c) 2022, \nDaeho Lee, Kyung Hee University"), 
             30, 100);
     }
 
@@ -247,7 +252,7 @@ void CMainFrame::OnAbout(wxCommandEvent& event) {
     CAboutDialog dlg(this, wxID_ANY, wxString("KhuCv App"), Pos, wxSize(425, 300), wxDEFAULT_DIALOG_STYLE);
     dlg.ShowModal();
 
-    //wxMessageBox(wxT("KhuCv App ver. 1.0.5.0\n(Open development SW for computer vision)\nCopyright(c) 2022, \nDaeho Lee, Kyung Hee University"), wxT("KhuCv App"), wxICON_INFORMATION);
+    //wxMessageBox(wxT("KhuCv App ver. 1.0.6.0\n(Open development SW for computer vision)\nCopyright(c) 2022, \nDaeho Lee, Kyung Hee University"), wxT("KhuCv App"), wxICON_INFORMATION);
 }
 
 void CMainFrame::OnFileOpen(wxCommandEvent& event)
@@ -261,17 +266,22 @@ void CMainFrame::OnFileOpen(wxCommandEvent& event)
     fileName = openFileDialog.GetFilename();
 
     cv::Mat cvImage;
-    std::ifstream f(filePath, std::iostream::binary);
+    std::ifstream f(std::filesystem::path(filePath), std::iostream::binary);
 
     if (f.good()) {
-        std::filebuf* pbuf = f.rdbuf();
-        size_t size = pbuf->pubseekoff(0, f.end, f.in);
-        pbuf->pubseekpos(0, f.in);
+        try{
+            std::filebuf* pbuf = f.rdbuf();
+            size_t size = pbuf->pubseekoff(0, f.end, f.in);
+            pbuf->pubseekpos(0, f.in);
 
-        std::vector<uchar> buffer(size);
-        pbuf->sgetn((char*)buffer.data(), size);
+            std::vector<uchar> buffer(size);
+            pbuf->sgetn((char*)buffer.data(), size);
 
-        cvImage = cv::imdecode(buffer, cv::IMREAD_COLOR);
+            cvImage = cv::imdecode(buffer, cv::IMREAD_COLOR);
+        }
+        catch (std::exception& e) {
+            DlgPrintf("*** Exception: %s", e.what());
+        }
 
         f.close();
     }
@@ -306,7 +316,7 @@ void CMainFrame::OnFileSave(wxCommandEvent& event)
 
     cv::imencode(ext, kcImage.cvImage, buffer);
 
-    std::ofstream f(filePath, std::iostream::binary);
+    std::ofstream f(std::filesystem::path(filePath), std::iostream::binary);
     if (f.good()) {
         f.write((char*)buffer.data(), buffer.size());
         f.close();
@@ -323,17 +333,22 @@ void CMainFrame::OnRecentFiles(wxCommandEvent & event) {
         std::wstring filePath;
         filePath = FileNameString;
         std::wstring fileName = (const wchar_t*)wxFileNameIst.GetFullName();
-        std::ifstream f(filePath, std::iostream::binary);
+        std::ifstream f(std::filesystem::path(filePath), std::iostream::binary);
         cv::Mat cvImage;
         if (f.good()) {
-            std::filebuf* pbuf = f.rdbuf();
-            size_t size = pbuf->pubseekoff(0, f.end, f.in);
-            pbuf->pubseekpos(0, f.in);
+            try {
+                std::filebuf* pbuf = f.rdbuf();
+                size_t size = pbuf->pubseekoff(0, f.end, f.in);
+                pbuf->pubseekpos(0, f.in);
 
-            std::vector<uchar> buffer(size);
-            pbuf->sgetn((char*)buffer.data(), size);
+                std::vector<uchar> buffer(size);
+                pbuf->sgetn((char*)buffer.data(), size);
 
-            cvImage = cv::imdecode(buffer, cv::IMREAD_COLOR);
+                cvImage = cv::imdecode(buffer, cv::IMREAD_COLOR);
+            }
+            catch (std::exception& e) {
+                DlgPrintf("*** Exception: %s", e.what());
+            }
 
             f.close();
         }

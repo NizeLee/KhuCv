@@ -1,7 +1,7 @@
 //  KhuCvApp.h: interface of CKhuCvApp
 //	Dept. Software Convergence, Kyung Hee University
 //	Prof. Daeho Lee, nize@khu.ac.kr
-//	KhuCv App ver. 1.0.5.0
+//	KhuCv App ver. 1.0.6.0
 
 #pragma once
 #include <wx/wx.h>
@@ -23,6 +23,7 @@
 #include <sstream>
 #include <string>
 #include <fstream>
+#include <filesystem>
 
 #include "ClientView.h"
 #include "MainFrame.h"

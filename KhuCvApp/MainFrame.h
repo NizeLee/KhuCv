@@ -1,7 +1,7 @@
 //  MainFrame.h: interface of CMainFrame (parent frame of multiple document interface)
 //	Dept. Software Convergence, Kyung Hee University
 //	Prof. Daeho Lee, nize@khu.ac.kr
-//	KhuCv App ver. 1.0.5.0
+//	KhuCv App ver. 1.0.6.0
 
 #pragma once
 

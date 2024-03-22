@@ -1,7 +1,7 @@
 //  MainDialog.cpp: implementation of CMainDialog (main dialog of KhuCvApp)
 //	Dept. Software Convergence, Kyung Hee University
 //	Prof. Daeho Lee, nize@khu.ac.kr
-//	KhuCv App ver. 1.0.5.0
+//	KhuCv App ver. 1.0.6.0
 
 #include "KhuCvApp.h"
 
@@ -197,6 +197,11 @@ void CMainDialog::OnSelSrcFileFolder(wxCommandEvent& event) {
 
 		FilePathArray.Sort();
 		for (int i = 0; i < FilePathArray.GetCount(); ++i) {
+			std::wstring wstrFilePath;
+			wstrFilePath = FilePathArray[i];
+			auto fsPath = std::filesystem::path(wstrFilePath);
+			if (std::filesystem::is_directory(fsPath)) continue;
+
 			NumString << std::setw(10) << std::setfill(L'0') << nNum++;
 			int len = m_pListCtrl->GetItemCount();
 			long index = m_pListCtrl->InsertItem(len, NumString.str().c_str());
@@ -285,17 +290,22 @@ void CMainDialog::OnActivatedFileListCtrl(wxListEvent& event) {
 		auto start = std::chrono::steady_clock::now();
 
 		cv::Mat image;
-		std::ifstream f(filename, std::iostream::binary);
+		std::ifstream f(std::filesystem::path(filename), std::iostream::binary);
 
 		if (f.good()) {
-			std::filebuf* pbuf = f.rdbuf();
-			size_t size = pbuf->pubseekoff(0, f.end, f.in);
-			pbuf->pubseekpos(0, f.in);
+			try {
+				std::filebuf* pbuf = f.rdbuf();
+				size_t size = pbuf->pubseekoff(0, f.end, f.in);
+				pbuf->pubseekpos(0, f.in);
 
-			std::vector<uchar> buffer(size);
-			pbuf->sgetn((char*)buffer.data(), size);
+				std::vector<uchar> buffer(size);
+				pbuf->sgetn((char*)buffer.data(), size);
 
-			image = cv::imdecode(buffer, cv::IMREAD_COLOR);
+				image = cv::imdecode(buffer, cv::IMREAD_COLOR);
+			}
+			catch (std::exception& e) {
+				DlgPrintf("*** Exception: %s", e.what());
+			}
 
 			f.close();
 		}
@@ -394,7 +404,7 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 			std::vector<uchar> buffer;
 			cv::imencode(".jpg", CurrentImage, buffer);
 
-			std::ofstream f(SaveFileName.str(), std::iostream::binary);
+			std::ofstream f(std::filesystem::path(SaveFileName.str()), std::iostream::binary);
 			if (f.good()) {
 				f.write((char*)buffer.data(), buffer.size());
 				f.close();
@@ -421,17 +431,22 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 
 		filename = pathNameLc;
 
-		std::ifstream f(filename, std::iostream::binary);
+		std::ifstream f(std::filesystem::path(filename), std::iostream::binary);
 
 		if (f.good()) {
-			std::filebuf* pbuf = f.rdbuf();
-			size_t size = pbuf->pubseekoff(0, f.end, f.in);
-			pbuf->pubseekpos(0, f.in);
+			try {
+				std::filebuf* pbuf = f.rdbuf();
+				size_t size = pbuf->pubseekoff(0, f.end, f.in);
+				pbuf->pubseekpos(0, f.in);
 
-			std::vector<uchar> buffer(size);
-			pbuf->sgetn((char*)buffer.data(), size);
+				std::vector<uchar> buffer(size);
+				pbuf->sgetn((char*)buffer.data(), size);
 
-			CurrentImage = cv::imdecode(buffer, cv::IMREAD_COLOR);
+				CurrentImage = cv::imdecode(buffer, cv::IMREAD_COLOR);
+			}
+			catch (std::exception& e) {
+				DlgPrintf("*** Exception: %s", e.what());
+			}
 
 			f.close();
 		}
@@ -506,7 +521,7 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 				std::vector<uchar> buffer;
 				cv::imencode(".jpg", CurrentImage, buffer);
 
-				std::ofstream f(SaveFileName.str(), std::iostream::binary);
+				std::ofstream f(std::filesystem::path(SaveFileName.str()), std::iostream::binary);
 				if (f.good()) {
 					f.write((char*)buffer.data(), buffer.size());
 					f.close();

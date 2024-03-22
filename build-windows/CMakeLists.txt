@@ -44,6 +44,8 @@ link_directories("${WX_ROOTDIR}/lib/vc_ReleaseX64_lib")
 
 add_executable(${PROJECT_NAME} ${PROG_SRCS})
 
+target_compile_features (${PROJECT_NAME} INTERFACE cxx_std_17)
+
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
 target_link_options(${PROJECT_NAME} PRIVATE "/SUBSYSTEM:WINDOWS")
 
