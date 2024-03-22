@@ -1,14 +1,14 @@
 # KhuCv
 * KhuCv: Open development source for computer vision  (Kyung Hee University, Data Analysis & Vision Intelligence)
-* C++ (wxWidgets + OpenCV)
+* C++ (wxWidgets + OpenCV), C++17
 
 ## Introduction
 * Open program sources
 * wxWidgets 3.x + OpenCV 4.x
-* File open by OpenCV
-* File save by OpenCV (individual image)
-* Images can be displayed any position and can be moved by mouse
-* Strings can be written to Output window (list box)
+* Files open by OpenCV
+* Files save by OpenCV (individual image)
+* Images can be displayed in any position and can be moved by mouse
+* Messages using format specifiers can be written to the output window (list box)
 * Sequence processing (webcam, image sequence, video file)
 
 ## Environment setting
@@ -16,7 +16,8 @@
   + Windows (+Visual Studio)
     - Download wxWidgets source code from https://www.wxwidgets.org/downloads/
     - Open wxWidgets-x.x.x/build/msw/wx_vcxx.sin with Visual Studio and build
-  + Linux (Ubuntu) 
+  + Linux (Ubuntu)
+    - Install g++-11(Ubuntu 20.04 or below versions, see https://lindevs.com/install-g-on-ubuntu/)
     - Download wxWidgets source code from https://www.wxwidgets.org/downloads/
     - $ sudo apt install libgtk-3-dev
     - $ mkdir build-gtk
