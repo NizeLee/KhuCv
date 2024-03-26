@@ -98,8 +98,8 @@
     - $ [SDI] msbuild KhuCvS.vcxproj /p:configuration=release /p:platform=x64 /p:CharacterSet=Unicode 
   + Linux (Ubuntu) 
     - $ cd build-linux
-    - [MDI] $ cmake .
     - [SDI] $ cmake . -D SDI=True
+    - [MDI] $ cmake . -D SDI=False
     - $ make
   + Mac (+Xcode) I
     - wxWidgets sample: https://wiki.wxwidgets.org/Creating_Xcode_projects_for_wxWidgets_applications
@@ -109,8 +109,8 @@
     - Build
   + Mac II
     - $ cd build-mac
-    - [MDI] $ cmake .
     - [SDI] $ cmake . -D SDI=True
+    - [MDI] $ cmake . -D SDI=False
     - $ make
 
 [Windows-MDI]
