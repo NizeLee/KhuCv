@@ -1,7 +1,7 @@
 //  ClientView.cpp: implementation of CClientView (client view of child frame)
 //	Dept. Software Convergence, Kyung Hee University
 //	Prof. Daeho Lee, nize@khu.ac.kr
-//	KhuCv App ver. 1.0.6.0
+//	KhuCv App ver. 1.0.7.0
 
 #include "KhuCvApp.h"
 
@@ -112,8 +112,13 @@ void CClientView::OnMouseLeftDown(wxMouseEvent& event) {
         if(m_nCurrentGrabImageNum >= 0){
             int nLastViewImageNum = (int)(((CParentFrame*)(GetParent()))->m_ImageList.size())-1;
 
-            std::swap(((CParentFrame*)(GetParent()))->m_ImageList[m_nCurrentGrabImageNum],
-                ((CParentFrame*)(GetParent()))->m_ImageList[nLastViewImageNum]);
+            //std::swap(((CParentFrame*)(GetParent()))->m_ImageList[m_nCurrentGrabImageNum],
+            //    ((CParentFrame*)(GetParent()))->m_ImageList[nLastViewImageNum]);
+
+            CKcImage Temp = ((CParentFrame*)(GetParent()))->m_ImageList[m_nCurrentGrabImageNum];
+            for (int i = m_nCurrentGrabImageNum; i < nLastViewImageNum ; ++i)
+                ((CParentFrame*)(GetParent()))->m_ImageList[i] = ((CParentFrame*)(GetParent()))->m_ImageList[i + 1];
+            ((CParentFrame*)(GetParent()))->m_ImageList[nLastViewImageNum] = Temp;
 
             m_nCurrentGrabImageNum = nLastViewImageNum;
             m_nLastSelImageNum = nLastViewImageNum;

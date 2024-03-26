@@ -1,7 +1,7 @@
 //  MainDialog.cpp: implementation of CMainDialog (main dialog of KhuCvApp)
 //	Dept. Software Convergence, Kyung Hee University
 //	Prof. Daeho Lee, nize@khu.ac.kr
-//	KhuCv App ver. 1.0.6.0
+//	KhuCv App ver. 1.0.7.0
 
 #include "KhuCvApp.h"
 
@@ -17,11 +17,16 @@ EVT_BUTTON(IDC_REVERSE, CMainDialog::OnReverse)
 EVT_BUTTON(IDC_ADD_IMAGES, CMainDialog::OnAddImages)
 EVT_BUTTON(IDC_HISTOGRAM, CMainDialog::OnHistogram)
 EVT_BUTTON(IDC_LABDELING, CMainDialog::OnLabeling)
+EVT_BUTTON(IDC_EXAMPLE0, CMainDialog::OnExample0)
 EVT_BUTTON(IDC_EXAMPLE1, CMainDialog::OnExample1)
 EVT_BUTTON(IDC_EXAMPLE2, CMainDialog::OnExample2)
 EVT_BUTTON(IDC_EXAMPLE3, CMainDialog::OnExample3)
 EVT_BUTTON(IDC_EXAMPLE4, CMainDialog::OnExample4)
 EVT_BUTTON(IDC_EXAMPLE5, CMainDialog::OnExample5)
+EVT_BUTTON(IDC_EXAMPLE6, CMainDialog::OnExample6)
+EVT_BUTTON(IDC_EXAMPLE7, CMainDialog::OnExample7)
+EVT_BUTTON(IDC_EXAMPLE8, CMainDialog::OnExample8)
+EVT_BUTTON(IDC_EXAMPLE9, CMainDialog::OnExample9)
 EVT_TIMER(-1, CMainDialog::OnTimer)
 END_EVENT_TABLE()
 
@@ -87,7 +92,6 @@ CMainDialog::CMainDialog(wxWindow* parent, wxWindowID id, const wxString& title,
 	}
 
 	wxArrayString CamString;
-
 	CamString.Add(L"No-Cam");
 	for (int i = 0; i < device_counts; ++i) {
 		std::wstringstream ListName;
@@ -95,39 +99,64 @@ CMainDialog::CMainDialog(wxWindow* parent, wxWindowID id, const wxString& title,
 		CamString.Add(ListName.str());
 	}
 
-	m_pSelCam = new wxComboBox(this, IDC_SEL_CAM, wxEmptyString, wxDefaultPosition, wxSize(60, 20), CamString, wxCB_DROPDOWN | wxCB_READONLY);
+	wxArrayString ProjectString;
+	for (int i = 0; i < KHUCV_MAX_PROJECT_NUMS; ++i) {
+		std::wstringstream ListName;
+		ListName << L"Project #" << i;
+		ProjectString.Add(ListName.str());
+	}
+
+	m_pSelCam = new wxComboBox(this, IDC_SEL_CAM, wxEmptyString, wxDefaultPosition, wxSize(80, 20), CamString, wxCB_DROPDOWN | wxCB_READONLY);
 	m_pSelCam->SetSelection(0);
+	m_pSelPorjNumLabel = new wxStaticText(this, IDC_SEL_PROJ_NUM_LABEL, wxT("   Project: "), wxDefaultPosition, wxSize(60, 20));
+	m_pSelProjNum = new wxComboBox(this, IDC_SEL_PROJ_NUM, wxEmptyString, wxDefaultPosition, wxSize(80, 20), ProjectString, wxCB_DROPDOWN | wxCB_READONLY);
+	m_pSelProjNum->SetSelection(0);
 	m_pRunButton = new wxButton(this, IDC_RUN, wxT("Run"), wxDefaultPosition, wxSize(50, 20));
 	m_pPauseButton = new wxButton(this, IDC_PAUSE, wxT("Pause"), wxDefaultPosition, wxSize(50, 20));
-	m_pStepCheck = new wxCheckBox(this, IDC_SEL_STEP_CHECK, wxT("Step"), wxDefaultPosition, wxSize(20, 20));
-	m_pVerboseCheck = new wxCheckBox(this, IDC_SEL_VERBOSE_CHECK, wxT("Verbose"), wxDefaultPosition, wxSize(60, 20));
+	m_pStepCheck = new wxCheckBox(this, IDC_SEL_STEP_CHECK, wxT("Step"), wxDefaultPosition, wxSize(50, 20));
+	m_pVerboseCheck = new wxCheckBox(this, IDC_SEL_VERBOSE_CHECK, wxT("Verbose"), wxDefaultPosition, wxSize(70, 20));
 	m_pVerboseCheck->SetValue(true);
 
-	m_pHbox[4]->Add(m_pSelCam, 1);
-	m_pHbox[4]->Add(m_pRunButton, 1, wxLEFT, 5);
-	m_pHbox[4]->Add(m_pPauseButton, 1, wxLEFT, 5);
-	m_pHbox[4]->Add(m_pStepCheck, 1, wxLEFT, 5);
+	m_pHbox[4]->Add(m_pSelCam, 0);
+	m_pHbox[4]->Add(m_pSelPorjNumLabel, 0, wxLeft | wxALIGN_CENTER_VERTICAL, 5);
+	m_pHbox[4]->Add(m_pSelProjNum, 0, wxLeft, 5);
+	m_pHbox[4]->Add(m_pRunButton, 0, wxLEFT, 5);
+	m_pHbox[4]->Add(m_pPauseButton, 0, wxLEFT, 5);
+	m_pHbox[4]->Add(m_pStepCheck, 0, wxLEFT, 5);
 	m_pHbox[4]->Add(m_pVerboseCheck, 0, wxLEFT, 5);
 
 	m_pReverseButton = new wxButton(this, IDC_REVERSE, wxT("Reverse"), wxDefaultPosition, wxSize(50, 20));
 	m_pAddButton = new wxButton(this, IDC_ADD_IMAGES, wxT("Add"), wxDefaultPosition, wxSize(30, 20));
 	m_pHistogramButton = new wxButton(this, IDC_HISTOGRAM, wxT("Histogram"), wxDefaultPosition, wxSize(70, 20));
 	m_pThreLabelingButton = new wxButton(this, IDC_LABDELING, wxT("Labeling"), wxDefaultPosition, wxSize(70, 20));
-	m_pExample1Button = new wxButton(this, IDC_EXAMPLE1, wxT("Ex1"), wxDefaultPosition, wxSize(30, 20));
-	m_pExample2Button = new wxButton(this, IDC_EXAMPLE2, wxT("Ex2"), wxDefaultPosition, wxSize(30, 20));
-	m_pExample3Button = new wxButton(this, IDC_EXAMPLE3, wxT("Ex3"), wxDefaultPosition, wxSize(30, 20));
-	m_pExample4Button = new wxButton(this, IDC_EXAMPLE4, wxT("Ex4"), wxDefaultPosition, wxSize(30, 20));
-	m_pExample5Button = new wxButton(this, IDC_EXAMPLE5, wxT("Ex5"), wxDefaultPosition, wxSize(30, 20));
 	
 	m_pHbox[5]->Add(m_pReverseButton, 1);
 	m_pHbox[5]->Add(m_pAddButton, 1, wxLEFT, 5);
 	m_pHbox[5]->Add(m_pHistogramButton, 1, wxLEFT, 5);
 	m_pHbox[5]->Add(m_pThreLabelingButton, 1, wxLEFT, 5);
-	m_pHbox[5]->Add(m_pExample1Button, 0, wxLEFT, 5);
-	m_pHbox[5]->Add(m_pExample2Button, 0, wxLEFT, 5);
-	m_pHbox[5]->Add(m_pExample3Button, 0, wxLEFT, 5);
-	m_pHbox[5]->Add(m_pExample4Button, 0, wxLEFT, 5);
-	m_pHbox[5]->Add(m_pExample5Button, 0, wxLEFT, 5);
+
+
+	m_pExample0Button = new wxButton(this, IDC_EXAMPLE0, wxT("Ex0"), wxDefaultPosition, wxSize(40, 20));
+	m_pExample1Button = new wxButton(this, IDC_EXAMPLE1, wxT("Ex1"), wxDefaultPosition, wxSize(40, 20));
+	m_pExample2Button = new wxButton(this, IDC_EXAMPLE2, wxT("Ex2"), wxDefaultPosition, wxSize(40, 20));
+	m_pExample3Button = new wxButton(this, IDC_EXAMPLE3, wxT("Ex3"), wxDefaultPosition, wxSize(40, 20));
+	m_pExample4Button = new wxButton(this, IDC_EXAMPLE4, wxT("Ex4"), wxDefaultPosition, wxSize(40, 20));
+	m_pExample5Button = new wxButton(this, IDC_EXAMPLE5, wxT("Ex5"), wxDefaultPosition, wxSize(40, 20));
+	m_pExample6Button = new wxButton(this, IDC_EXAMPLE6, wxT("Ex6"), wxDefaultPosition, wxSize(40, 20));
+	m_pExample7Button = new wxButton(this, IDC_EXAMPLE7, wxT("Ex7"), wxDefaultPosition, wxSize(40, 20));
+	m_pExample8Button = new wxButton(this, IDC_EXAMPLE8, wxT("Ex8"), wxDefaultPosition, wxSize(40, 20));
+	m_pExample9Button = new wxButton(this, IDC_EXAMPLE9, wxT("Ex9"), wxDefaultPosition, wxSize(40, 20));
+
+	m_pHbox[6]->Add(m_pExample0Button, 0);
+	m_pHbox[6]->Add(m_pExample1Button, 0, wxLEFT, 5);
+	m_pHbox[6]->Add(m_pExample2Button, 0, wxLEFT, 5);
+	m_pHbox[6]->Add(m_pExample3Button, 0, wxLEFT, 5);
+	m_pHbox[6]->Add(m_pExample4Button, 0, wxLEFT, 5);
+	m_pHbox[6]->Add(m_pExample5Button, 0, wxLEFT, 5);
+	m_pHbox[6]->Add(m_pExample6Button, 0, wxLEFT, 5);
+	m_pHbox[6]->Add(m_pExample7Button, 0, wxLEFT, 5);
+	m_pHbox[6]->Add(m_pExample8Button, 0, wxLEFT, 5);
+	m_pHbox[6]->Add(m_pExample9Button, 0, wxLEFT, 5);
 
 	m_pVbox->Add(m_pHbox[0], 1, wxALIGN_CENTER | wxTOP, 5);
 	m_pVbox->Add(m_pHbox[1], 1, wxALIGN_CENTER | wxTOP, 5);
@@ -135,11 +164,12 @@ CMainDialog::CMainDialog(wxWindow* parent, wxWindowID id, const wxString& title,
 	m_pVbox->Add(m_pHbox[3], 1, wxALIGN_CENTER | wxTOP, 5);
 	m_pVbox->Add(m_pHbox[4], 1, wxALIGN_CENTER | wxTOP, 5);
 	m_pVbox->Add(m_pHbox[5], 1, wxALIGN_CENTER | wxTOP, 5);
+	m_pVbox->Add(m_pHbox[6], 1, wxALIGN_CENTER | wxTOP, 5);
 #ifndef _KHUCV_SDI
 #else
 	m_pPrintListBox = new wxListBox(this, IDC_PRINT_LIST, wxDefaultPosition, wxSize(520, 150));
-	m_pHbox[6]->Add(m_pPrintListBox, 1);
-	m_pVbox->Add(m_pHbox[6], 1, wxALIGN_CENTER | wxTOP, 5);
+	m_pHbox[7]->Add(m_pPrintListBox, 1);
+	m_pVbox->Add(m_pHbox[7], 1, wxALIGN_CENTER | wxTOP, 5);
 #endif
 
 	SetSizer(m_pVbox);
@@ -555,7 +585,9 @@ void CMainDialog::OnTimer(wxTimerEvent& event) {
 		cv::Mat Output;
 		
 		// Project Run;
-		m_Project.Run(CurrentImage, Output, m_bFirstRun, m_pVerboseCheck->GetValue());
+
+		int nProjNum = m_pSelProjNum->GetSelection();
+		m_Project.Run(nProjNum, CurrentImage, Output, m_bFirstRun, m_pVerboseCheck->GetValue());
 		m_bFirstRun = false;
 
 		auto end = std::chrono::steady_clock::now();
@@ -785,6 +817,9 @@ void CMainDialog::OnLabeling(wxCommandEvent& event) {
 	DisplayImage(img_labels, kcImage.pos.x + kcImage.cvImage.cols * 2, kcImage.pos.y, true, false);
 }
 
+void CMainDialog::OnExample0(wxCommandEvent& event) {
+}
+
 void CMainDialog::OnExample1(wxCommandEvent& event) {
 }
 
@@ -799,4 +834,17 @@ void CMainDialog::OnExample4(wxCommandEvent& event) {
 
 void CMainDialog::OnExample5(wxCommandEvent& event) {
 }
+
+void CMainDialog::OnExample6(wxCommandEvent& event) {
+}
+
+void CMainDialog::OnExample7(wxCommandEvent& event) {
+}
+
+void CMainDialog::OnExample8(wxCommandEvent& event) {
+}
+
+void CMainDialog::OnExample9(wxCommandEvent& event) {
+}
+
 

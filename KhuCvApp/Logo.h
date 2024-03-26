@@ -1,7 +1,7 @@
 //  Logo.h: logo image
 //	Dept. Software Convergence, Kyung Hee University
 //	Prof. Daeho Lee, nize@khu.ac.kr
-//	KhuCv App ver. 1.0.6.0
+//	KhuCv App ver. 1.0.7.0
 
 #pragma once
 
