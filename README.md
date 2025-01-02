@@ -26,7 +26,7 @@
     - $ make
     - $ sudo make install
     - $ sudo ldconfig
-    - $ cd smaples
+    - $ cd samples
     - $ make
     - $cd ../demos
     - $make
@@ -49,7 +49,7 @@
 
 * OpenCV 4.x
   + Windows (+Visual Studio)
-    - Download release files form https://opencv.org/releases/ and extract files
+    - Download release files from https://opencv.org/releases/ and extract files
   + Linux (Ubuntu) 
     - $ sudo apt update && sudo apt install -y cmake g++ wget unzip
     - $ sudo apt-get install ffmpeg
