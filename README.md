@@ -17,7 +17,7 @@
     - Download wxWidgets source code from https://www.wxwidgets.org/downloads/
     - Open wxWidgets-x.x.x/build/msw/wx_vcxx.sin with Visual Studio and build (release and debug)
   + Linux (Ubuntu)
-    - Install g++-11(Ubuntu 20.04 or below versions, see https://lindevs.com/install-g-on-ubuntu/)
+    - Install g++-13(Ubuntu 20.04 or below versions, see https://lindevs.com/install-g-on-ubuntu/)
     - Download wxWidgets source code from https://www.wxwidgets.org/downloads/
     - $ sudo apt install libgtk-3-dev
     - $ mkdir build-gtk
