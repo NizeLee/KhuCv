@@ -1,16 +1,16 @@
 //  MainDialog.h: interface of CMainDialog (main dialog of KhuCvApp)
 //	Dept. Software Convergence, Kyung Hee University
 //	Prof. Daeho Lee, nize@khu.ac.kr
-//	KhuCv App ver. 1.0.7.0
+//
 
 #pragma once
 
 #include "Project.h"
 
 #ifndef _KHUCV_SDI
-#define H_BOX_SIZER_NUM	7
+#define H_BOX_SIZER_NUM	6
 #else
-#define H_BOX_SIZER_NUM	8
+#define H_BOX_SIZER_NUM	7
 #endif
 
 class CMainDialog : public wxDialog
@@ -36,28 +36,12 @@ public:
 	wxTextCtrl* m_pEndNum;
 
 	wxComboBox* m_pSelCam;
-	wxComboBox* m_pSelProjNum;
-	wxStaticText* m_pSelPorjNumLabel;
 	wxButton* m_pRunButton;
 	wxButton* m_pPauseButton;
 	wxCheckBox* m_pStepCheck;
 	wxCheckBox* m_pVerboseCheck;
 	
-	wxButton* m_pReverseButton;
-	wxButton* m_pAddButton;
-	wxButton* m_pHistogramButton;
-	wxButton* m_pThreLabelingButton;
-
-	wxButton* m_pExample0Button;
-	wxButton* m_pExample1Button;
-	wxButton* m_pExample2Button;
-	wxButton* m_pExample3Button;
-	wxButton* m_pExample4Button;
-	wxButton* m_pExample5Button;
-	wxButton* m_pExample6Button;
-	wxButton* m_pExample7Button;
-	wxButton* m_pExample8Button;
-	wxButton* m_pExample9Button;
+	wxButton* m_pExampleButton;
 #ifndef _KHUCV_SDI
 #else
 	wxListBox* m_pPrintListBox;
@@ -65,16 +49,14 @@ public:
 
 	wxTimer m_SequenceRunTimer;
 	int m_nProcessingNum;
-	std::wstring m_strSaveFileNameHeader;
+	std::string m_strSaveFileNameHeader;
 	bool m_bRunTimer, m_bRunPause;
 
 	wxTimer m_VideoRunTimer;
 	cv::VideoCapture m_VideoProcessingVc;
 	cv::VideoCapture m_CamProcessingVc;
-	std::wstring m_VideoFileName;
-	std::wstring m_VideoFilePath;
-	std::string m_VideoFileNameUtf8;
-	std::string m_VideoFilePathUtf8;
+	char m_VideoFileName[256];
+	char m_VideoFilePath[256];
 	int m_nVideoFileFrameCnt;
 
 	wxTimer m_CamRunTimer;
@@ -93,20 +75,7 @@ public:
 	void OnTimer(wxTimerEvent& event);
 	void OnRun(wxCommandEvent& event);
 	void OnPause(wxCommandEvent& event);
-	void OnReverse(wxCommandEvent& event);
-	void OnAddImages(wxCommandEvent& event);
-	void OnHistogram(wxCommandEvent& event);
-	void OnLabeling(wxCommandEvent& event);
-	void OnExample0(wxCommandEvent& event);
-	void OnExample1(wxCommandEvent& event);
-	void OnExample2(wxCommandEvent& event);
-	void OnExample3(wxCommandEvent& event);
-	void OnExample4(wxCommandEvent& event);
-	void OnExample5(wxCommandEvent& event);
-	void OnExample6(wxCommandEvent& event);
-	void OnExample7(wxCommandEvent& event);
-	void OnExample8(wxCommandEvent& event);
-	void OnExample9(wxCommandEvent& event);
+	void OnExample(wxCommandEvent& event);
 
 	DECLARE_EVENT_TABLE();
 };

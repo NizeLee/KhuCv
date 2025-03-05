@@ -1,9 +1,19 @@
 //  ClientView.cpp: implementation of CClientView (client view of child frame)
 //	Dept. Software Convergence, Kyung Hee University
 //	Prof. Daeho Lee, nize@khu.ac.kr
-//	KhuCv App ver. 1.0.7.0
+//
 
 #include "KhuCvApp.h"
+
+#ifdef _MSC_VER
+#ifdef _DEBUG
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+#define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
+#define new DEBUG_NEW
+#endif
+#endif
 
 BEGIN_EVENT_TABLE(CClientView, wxScrolled<wxWindow>)
 EVT_PAINT(CClientView::OnPaint)
@@ -37,6 +47,14 @@ CClientView::CClientView(wxWindow * parent) {
     Create(parent, wxID_ANY);
     SetScrollRate(10, 10);
     SetVirtualSize(1024 * 20, 768 * 20);
+
+    /*wxAcceleratorEntry entries[3];
+    entries[0].Set(wxACCEL_CTRL, (int)'C', IDM_CONTEXT_COPY);
+    entries[1].Set(wxACCEL_CTRL, (int)'V', IDM_CONTEXT_PASTE);
+    entries[2].Set(wxACCEL_CTRL, (int)'D', IDM_CONTEXT_DUPLICATE);
+
+    wxAcceleratorTable accel(3, entries);
+    SetAcceleratorTable(accel);*/
 
     m_nSelRegionIndex = -1;
     m_bLeftIsDown = false;
@@ -89,7 +107,7 @@ void CClientView::OnPaint(wxPaintEvent& event) {
 }
 
 int CClientView::GetPosImage(const wxPoint &pos) {
-    for (int i = (int)((CParentFrame*)(GetParent()))->m_ImageList.size() - 1; i >= 0; --i) {
+    for (int i = ((CParentFrame*)(GetParent()))->m_ImageList.size() - 1; i >= 0; --i) {
         CKcImage& kcImage = ((CParentFrame*)(GetParent()))->m_ImageList[i];
         wxRect rt(kcImage.pos, wxSize(kcImage.cvImage.cols, kcImage.cvImage.rows));
         if (rt.Contains(pos)) return i;
@@ -106,19 +124,14 @@ void CClientView::OnMouseLeftDown(wxMouseEvent& event) {
         wxPoint ScrolledPosition;
         CalcScrolledPosition(0, 0, &(ScrolledPosition.x), &(ScrolledPosition.y));
 
-        m_nCurrentGrabImageNum = (int)GetPosImage(m_SaveGrabPoint - ScrolledPosition);
+        m_nCurrentGrabImageNum = GetPosImage(m_SaveGrabPoint - ScrolledPosition);
         m_SavePrevRect = wxRect(0, 0, 0, 0);
 
         if(m_nCurrentGrabImageNum >= 0){
-            int nLastViewImageNum = (int)(((CParentFrame*)(GetParent()))->m_ImageList.size())-1;
+            int nLastViewImageNum = ((CParentFrame*)(GetParent()))->m_ImageList.size()-1;
 
-            //std::swap(((CParentFrame*)(GetParent()))->m_ImageList[m_nCurrentGrabImageNum],
-            //    ((CParentFrame*)(GetParent()))->m_ImageList[nLastViewImageNum]);
-
-            CKcImage Temp = ((CParentFrame*)(GetParent()))->m_ImageList[m_nCurrentGrabImageNum];
-            for (int i = m_nCurrentGrabImageNum; i < nLastViewImageNum ; ++i)
-                ((CParentFrame*)(GetParent()))->m_ImageList[i] = ((CParentFrame*)(GetParent()))->m_ImageList[i + 1];
-            ((CParentFrame*)(GetParent()))->m_ImageList[nLastViewImageNum] = Temp;
+            std::swap(((CParentFrame*)(GetParent()))->m_ImageList[m_nCurrentGrabImageNum],
+                ((CParentFrame*)(GetParent()))->m_ImageList[nLastViewImageNum]);
 
             m_nCurrentGrabImageNum = nLastViewImageNum;
             m_nLastSelImageNum = nLastViewImageNum;
@@ -272,7 +285,7 @@ void CClientView::OnMouseLeftDblClk(wxMouseEvent& event) {
     wxPoint ScrolledPosition;
     CalcScrolledPosition(0, 0, &(ScrolledPosition.x), &(ScrolledPosition.y));
 
-    m_nCurrentGrabImageNum = (int)GetPosImage(m_SaveGrabPoint-ScrolledPosition);
+    m_nCurrentGrabImageNum = GetPosImage(m_SaveGrabPoint-ScrolledPosition);
 
     if (m_nCurrentGrabImageNum >= 0) {
         CKcImage kcImage;
@@ -304,11 +317,6 @@ void CClientView::OnContextMenu(wxContextMenuEvent& event) {
         m_ContextPoint = ScreenToClient(m_ContextPoint);
     }
 
-    wxPoint ScrolledPosition;
-    CalcScrolledPosition(0, 0, &(ScrolledPosition.x), &(ScrolledPosition.y));
-
-    m_nLastSelImageNum = (int)GetPosImage(m_ContextPoint-ScrolledPosition);
-
     wxMenu* popupMenu = new wxMenu;
 
     popupMenu->Append(IDM_CONTEXT_COPY, "&Copy\tCtrl+C");
@@ -320,6 +328,11 @@ void CClientView::OnContextMenu(wxContextMenuEvent& event) {
     popupMenu->Append(IDM_CONTEXT_SEL_REGION, "Sel Region");
 
     PopupMenu(popupMenu, m_ContextPoint);
+
+    wxPoint ScrolledPosition;
+    CalcScrolledPosition(0, 0, &(ScrolledPosition.x), &(ScrolledPosition.y));
+
+    m_nLastSelImageNum = GetPosImage(m_ContextPoint-ScrolledPosition);
 }
 
 void CClientView::OnCopy(wxCommandEvent& event) {

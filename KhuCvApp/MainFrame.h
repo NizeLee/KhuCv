@@ -1,7 +1,7 @@
 //  MainFrame.h: interface of CMainFrame (parent frame of multiple document interface)
 //	Dept. Software Convergence, Kyung Hee University
 //	Prof. Daeho Lee, nize@khu.ac.kr
-//	KhuCv App ver. 1.0.7.0
+//
 
 #pragma once
 
@@ -32,26 +32,11 @@ enum
     IDC_START_NUM,
     IDC_END_NUM,
     IDC_SEL_CAM,
-    IDC_SEL_PROJ_NUM,
-    IDC_SEL_PROJ_NUM_LABEL,
     IDC_RUN,
     IDC_PAUSE,
     IDC_SEL_STEP_CHECK,
     IDC_SEL_VERBOSE_CHECK, 
-    IDC_REVERSE,
-    IDC_ADD_IMAGES,
-    IDC_HISTOGRAM,
-    IDC_LABDELING,
-    IDC_EXAMPLE0,
-    IDC_EXAMPLE1,
-    IDC_EXAMPLE2,
-    IDC_EXAMPLE3,
-    IDC_EXAMPLE4,
-    IDC_EXAMPLE5,
-    IDC_EXAMPLE6,
-    IDC_EXAMPLE7,
-    IDC_EXAMPLE8,
-    IDC_EXAMPLE9,
+    IDC_EXAMPLE,
 
     IDC_PRINT_LIST = 201,
 

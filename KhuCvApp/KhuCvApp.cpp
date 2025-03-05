@@ -1,9 +1,19 @@
 //  KhuCvApp.cpp: implementation of CKhuCvApp
 //	Dept. Software Convergence, Kyung Hee University
 //	Prof. Daeho Lee, nize@khu.ac.kr
-//	KhuCv App ver. 1.0.7.0
+//
 
 #include "KhuCvApp.h"
+
+#ifdef _MSC_VER
+#ifdef _DEBUG
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+#define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
+#define new DEBUG_NEW
+#endif
+#endif
 
 #include <wx/display.h>
 
@@ -69,7 +79,7 @@ CKhuCvApp::~CKhuCvApp() {
 IMPLEMENT_APP(CKhuCvApp)
 
 #ifndef _KHUCV_SDI
-void NewFileOpen(const wchar_t* fileName, cv::Mat cvImage, int nPosX, int nPosY) {
+void NewFileOpen(const char* fileName, cv::Mat cvImage, int nPosX, int nPosY) {
 #ifndef _KHUCV_SDI
     CMainFrame* pMainFrame = wxGetApp().m_pMainFrame;
     CChildFrame* pParentFrame = new CChildFrame(pMainFrame, wxID_ANY, fileName);
@@ -83,7 +93,7 @@ void NewFileOpen(const wchar_t* fileName, cv::Mat cvImage, int nPosX, int nPosY)
 }
 #endif
 
-void DisplayImage(cv::Mat cvImage, int nPosX, int nPosY, bool bErase, bool bClearPos, bool bNormalize) {
+void DisplayImage(cv::Mat cvImage, int nPosX, int nPosY, bool bErase, bool bClearPos) {
 #ifndef _KHUCV_SDI
     CMainFrame* pMainFrame = wxGetApp().m_pMainFrame;
     CChildFrame* pParentFrame = (CChildFrame*)(pMainFrame->GetActiveChild());
@@ -97,7 +107,7 @@ void DisplayImage(cv::Mat cvImage, int nPosX, int nPosY, bool bErase, bool bClea
     if (cvCloneImage.type() != CV_8UC3) {
         if (cvCloneImage.channels() == 1) {
             cv::Mat cvNewImage(cvCloneImage.rows, cvCloneImage.cols, CV_8UC3);
-            if(bNormalize) cv::normalize(cvCloneImage, cvCloneImage, 0, 255, cv::NORM_MINMAX);
+            cv::normalize(cvCloneImage, cvCloneImage, 0, 255, cv::NORM_MINMAX);
             cvCloneImage.convertTo(cvCloneImage, CV_8UC1);
             cv::cvtColor(cvCloneImage, cvNewImage, cv::COLOR_GRAY2BGR);
             kcImage = CKcImage(cvNewImage, wxPoint(nPosX, nPosY));
@@ -108,7 +118,7 @@ void DisplayImage(cv::Mat cvImage, int nPosX, int nPosY, bool bErase, bool bClea
 
             cv::split(cvCloneImage, BGR);
             for(int i = 0 ; i < 3 ; ++i) {
-                if(bNormalize) cv::normalize(BGR[i], BGR[i], 0, 255, cv::NORM_MINMAX);
+                //cv::normalize(BGR[i], BGR[i], 0, 255, cv::NORM_MINMAX);
                 BGR[i].convertTo(BGR[i], CV_8UC1);
             }
             cv::merge(BGR, 3, cvNewImage);
@@ -118,10 +128,8 @@ void DisplayImage(cv::Mat cvImage, int nPosX, int nPosY, bool bErase, bool bClea
         else
             return;
     }
-    else {
-        if (bNormalize) cv::normalize(cvCloneImage, cvCloneImage, 0, 255, cv::NORM_MINMAX);
+    else
         kcImage = CKcImage(cvCloneImage, wxPoint(nPosX, nPosY));
-    }
 
     if(bClearPos) {
         auto NewEnd = std::remove_if(pParentFrame->m_ImageList.begin(), pParentFrame->m_ImageList.end(), [=](CKcImage kcImage){return kcImage.pos == wxPoint(nPosX, nPosY);});
@@ -129,12 +137,12 @@ void DisplayImage(cv::Mat cvImage, int nPosX, int nPosY, bool bErase, bool bClea
     }
 
     pParentFrame->m_ImageList.push_back(kcImage);
-    pParentFrame->m_pClientView->m_nLastSelImageNum = (int)pParentFrame->m_ImageList.size()-1;
+    pParentFrame->m_pClientView->m_nLastSelImageNum = pParentFrame->m_ImageList.size()-1;
     pParentFrame->m_pClientView->Refresh(bErase);
     pParentFrame->m_pClientView->Update();
 }
 
-CKcImage GetLastSelImage(int nLastIndex) {
+CKcImage GetLastSelImage() {
 #ifndef _KHUCV_SDI
     CMainFrame* pMainFrame = wxGetApp().m_pMainFrame;
     CChildFrame* pParentFrame = (CChildFrame*)(pMainFrame->GetActiveChild());
@@ -142,19 +150,19 @@ CKcImage GetLastSelImage(int nLastIndex) {
     CMainFrame* pParentFrame = wxGetApp().m_pMainFrame;
 #endif
 
-    int nCurrentGrabImageNum = pParentFrame->m_pClientView->m_nLastSelImageNum - nLastIndex;
+    int nCurrentGrabImageNum = pParentFrame->m_pClientView->m_nLastSelImageNum;
 
     if (nCurrentGrabImageNum < 0) {
 
-        if(pParentFrame->m_ImageList.size() > nLastIndex)
-            return pParentFrame->m_ImageList[pParentFrame->m_ImageList.size() - 1 - nLastIndex];
+        if(pParentFrame->m_ImageList.size() > 0)
+            return pParentFrame->m_ImageList[pParentFrame->m_ImageList.size()-1];
 
         return CKcImage();
     }
     else if (nCurrentGrabImageNum >= pParentFrame->m_ImageList.size()) {
 
-        if (pParentFrame->m_ImageList.size() > nLastIndex)
-            return pParentFrame->m_ImageList[pParentFrame->m_ImageList.size() - 1 - nLastIndex];
+        if (pParentFrame->m_ImageList.size() > 0)
+            return pParentFrame->m_ImageList[pParentFrame->m_ImageList.size() - 1];
 
         return CKcImage();
     }
@@ -166,14 +174,13 @@ CMainDialog* GetMainDialog() {
     return wxGetApp().m_pMainDialog;
 }
 
-void DlgPrintf(const wchar_t* ptr, ...) {
+void DlgPrintf(const char* ptr, ...) {
     unsigned int Num;
 
-    wchar_t ach[1024];
+    char ach[1024];
     va_list args;
     va_start(args, ptr);
-    vswprintf(ach, 1024, ptr, args);
-    va_end(args);
+    vsnprintf(ach, 1024, ptr, args);
 
     wxString msg = ach;
 #ifndef _KHUCV_SDI
@@ -204,48 +211,7 @@ void DlgPrintf(const wchar_t* ptr, ...) {
 #endif
 }
 
-void DlgPrintf(const char* ptr, ...) {
-    unsigned int Num;
-
-    char ach[1024];
-    va_list args;
-    va_start(args, ptr);
-    vsnprintf(ach, 1024, ptr, args);
-    va_end(args);
-
-    std::string camBackend = ach;
-    std::wstring camBackendw;
-    camBackendw.assign(camBackend.begin(), camBackend.end());
-    wxString msg = camBackendw.c_str();
-#ifndef _KHUCV_SDI
-    CMainFrame* pMainFrame = wxGetApp().m_pMainFrame;
-
-    Num = pMainFrame->GetPrintListBox()->GetCount();
-    pMainFrame->GetPrintListBox()->InsertItems(1, &msg, Num);
-    pMainFrame->GetPrintListBox()->SetSelection(Num);
-#else
-    if (wxGetApp().m_pMainDialog) {
-        CMainDialog* pMainDialog = wxGetApp().m_pMainDialog;
-
-        while (wxGetApp().m_PrintVector.size() > 0) {
-            for (auto msg : wxGetApp().m_PrintVector) {
-                Num = pMainDialog->GetPrintListBox()->GetCount();
-                pMainDialog->GetPrintListBox()->InsertItems(1, &msg, Num);
-                pMainDialog->GetPrintListBox()->SetSelection(Num);
-            }
-            wxGetApp().m_PrintVector.clear();
-        }
-        Num = pMainDialog->GetPrintListBox()->GetCount();
-        pMainDialog->GetPrintListBox()->InsertItems(1, &msg, Num);
-        pMainDialog->GetPrintListBox()->SetSelection(Num);
-    }
-    else {
-        wxGetApp().m_PrintVector.push_back(msg);
-    }
-#endif
-}
-
-void DrawTextOnImage(cv::Mat& cvImage, const std::wstring& str, int x, int y, unsigned char R, unsigned char G, unsigned char B, int pointSize) {
+void DrawTextOnImage(cv::Mat& cvImage, const std::string& str, int x, int y, unsigned char R, unsigned char G, unsigned char B, int pointSize) {
     cv::Mat rgbImage;
     int nW = cvImage.cols;
     int nH = cvImage.rows;
@@ -278,51 +244,4 @@ void DrawTextOnImage(cv::Mat& cvImage, const std::wstring& str, int x, int y, un
 
     rgbImage = cv::Mat(nH, nW, CV_8UC3, wx_Image.GetData(), nW * 3);
     cv::cvtColor(rgbImage, cvImage, cv::COLOR_RGB2BGR);
-}
-
-std::string UnicodeToUTF8(const std::wstring& ws) {
-    std::string s;
-    for (int i = 0; i < ws.size(); ++i) {
-        wchar_t wc = ws[i];
-        if (0 <= wc && wc <= 0x7f)
-        {
-            s += (char)wc;
-        }
-        else if (0x80 <= wc && wc <= 0x7ff)
-        {
-            s += (0xc0 | (wc >> 6));
-            s += (0x80 | (wc & 0x3f));
-        }
-        else if (0x800 <= wc && wc <= 0xffff)
-        {
-            s += (0xe0 | (wc >> 12));
-            s += (0x80 | ((wc >> 6) & 0x3f));
-            s += (0x80 | (wc & 0x3f));
-        }
-        else if (0x10000 <= wc && wc <= 0x1fffff)
-        {
-            s += (0xf0 | (wc >> 18));
-            s += (0x80 | ((wc >> 12) & 0x3f));
-            s += (0x80 | ((wc >> 6) & 0x3f));
-            s += (0x80 | (wc & 0x3f));
-        }
-        else if (0x200000 <= wc && wc <= 0x3ffffff)
-        {
-            s += (0xf8 | (wc >> 24));
-            s += (0x80 | ((wc >> 18) & 0x3f));
-            s += (0x80 | ((wc >> 12) & 0x3f));
-            s += (0x80 | ((wc >> 6) & 0x3f));
-            s += (0x80 | (wc & 0x3f));
-        }
-        else if (0x4000000 <= wc && wc <= 0x7fffffff)
-        {
-            s += (0xfc | (wc >> 30));
-            s += (0x80 | ((wc >> 24) & 0x3f));
-            s += (0x80 | ((wc >> 18) & 0x3f));
-            s += (0x80 | ((wc >> 12) & 0x3f));
-            s += (0x80 | ((wc >> 6) & 0x3f));
-            s += (0x80 | (wc & 0x3f));
-        }
-    }
-    return s;
 }
