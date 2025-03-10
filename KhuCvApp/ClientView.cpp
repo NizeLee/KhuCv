@@ -1,19 +1,9 @@
 //  ClientView.cpp: implementation of CClientView (client view of child frame)
 //	Dept. Software Convergence, Kyung Hee University
 //	Prof. Daeho Lee, nize@khu.ac.kr
-//
+//	KhuCv App ver. 1.1.0.0
 
 #include "KhuCvApp.h"
-
-#ifdef _MSC_VER
-#ifdef _DEBUG
-#define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
-#include <crtdbg.h>
-#define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
-#define new DEBUG_NEW
-#endif
-#endif
 
 BEGIN_EVENT_TABLE(CClientView, wxScrolled<wxWindow>)
 EVT_PAINT(CClientView::OnPaint)
@@ -23,12 +13,22 @@ EVT_LEFT_DCLICK(CClientView::OnMouseLeftDblClk)
 EVT_MOTION(CClientView::OnMouseMotion)
 EVT_CONTEXT_MENU(CClientView::OnContextMenu)
 
+EVT_MENU(IDM_CONTEXT_CUT, CClientView::OnCut)
 EVT_MENU(IDM_CONTEXT_COPY, CClientView::OnCopy)
 EVT_MENU(IDM_CONTEXT_PASTE, CClientView::OnPaste)
 EVT_MENU(IDM_CONTEXT_DUPLICATE, CClientView::OnDuplicate)
 EVT_MENU(IDM_CONTEXT_ZOOM_IN, CClientView::OnZoomIn)
 EVT_MENU(IDM_CONTEXT_ZOOM_OUT, CClientView::OnZoomOut)
+EVT_MENU(IDM_CONTEXT_ZOOM_NN, CClientView::OnZoomNn)
+EVT_MENU(IDM_CONTEXT_ZOOM_BL, CClientView::OnZoomBl)
+EVT_MENU(IDM_CONTEXT_ZOOM_BC, CClientView::OnZoomBc)
+EVT_UPDATE_UI(IDM_CONTEXT_ZOOM_NN, CClientView::OnUpdateZoomNn)
+EVT_UPDATE_UI(IDM_CONTEXT_ZOOM_BL, CClientView::OnUpdateZoomBl)
+EVT_UPDATE_UI(IDM_CONTEXT_ZOOM_BC, CClientView::OnUpdateZoomBc)
+EVT_MENU(IDM_CONTEXT_ADD_IMAGES, CClientView::OnAddImages)
+EVT_MENU(IDM_CONTEXT_SUBTRACT_IMAGES, CClientView::OnSubtractImages)
 EVT_MENU(IDM_CONTEXT_SEL_REGION, CClientView::OnSelRegion)
+EVT_MENU(IDM_CONTEXT_IMAGE_INFOMATION, CClientView::OnImageInformation)
 END_EVENT_TABLE()
 
 #ifndef _KHUCV_SDI
@@ -48,17 +48,11 @@ CClientView::CClientView(wxWindow * parent) {
     SetScrollRate(10, 10);
     SetVirtualSize(1024 * 20, 768 * 20);
 
-    /*wxAcceleratorEntry entries[3];
-    entries[0].Set(wxACCEL_CTRL, (int)'C', IDM_CONTEXT_COPY);
-    entries[1].Set(wxACCEL_CTRL, (int)'V', IDM_CONTEXT_PASTE);
-    entries[2].Set(wxACCEL_CTRL, (int)'D', IDM_CONTEXT_DUPLICATE);
-
-    wxAcceleratorTable accel(3, entries);
-    SetAcceleratorTable(accel);*/
-
     m_nSelRegionIndex = -1;
     m_bLeftIsDown = false;
-    
+
+    m_nZoomInterpolation = 2;
+
     Bind(wxEVT_PAINT, &CClientView::OnPaint, this);
 };
 
@@ -107,7 +101,7 @@ void CClientView::OnPaint(wxPaintEvent& event) {
 }
 
 int CClientView::GetPosImage(const wxPoint &pos) {
-    for (int i = ((CParentFrame*)(GetParent()))->m_ImageList.size() - 1; i >= 0; --i) {
+    for (int i = (int)((CParentFrame*)(GetParent()))->m_ImageList.size() - 1; i >= 0; --i) {
         CKcImage& kcImage = ((CParentFrame*)(GetParent()))->m_ImageList[i];
         wxRect rt(kcImage.pos, wxSize(kcImage.cvImage.cols, kcImage.cvImage.rows));
         if (rt.Contains(pos)) return i;
@@ -124,14 +118,19 @@ void CClientView::OnMouseLeftDown(wxMouseEvent& event) {
         wxPoint ScrolledPosition;
         CalcScrolledPosition(0, 0, &(ScrolledPosition.x), &(ScrolledPosition.y));
 
-        m_nCurrentGrabImageNum = GetPosImage(m_SaveGrabPoint - ScrolledPosition);
+        m_nCurrentGrabImageNum = (int)GetPosImage(m_SaveGrabPoint - ScrolledPosition);
         m_SavePrevRect = wxRect(0, 0, 0, 0);
 
         if(m_nCurrentGrabImageNum >= 0){
-            int nLastViewImageNum = ((CParentFrame*)(GetParent()))->m_ImageList.size()-1;
+            int nLastViewImageNum = (int)(((CParentFrame*)(GetParent()))->m_ImageList.size())-1;
 
-            std::swap(((CParentFrame*)(GetParent()))->m_ImageList[m_nCurrentGrabImageNum],
-                ((CParentFrame*)(GetParent()))->m_ImageList[nLastViewImageNum]);
+            //std::swap(((CParentFrame*)(GetParent()))->m_ImageList[m_nCurrentGrabImageNum],
+            //    ((CParentFrame*)(GetParent()))->m_ImageList[nLastViewImageNum]);
+
+            CKcImage Temp = ((CParentFrame*)(GetParent()))->m_ImageList[m_nCurrentGrabImageNum];
+            for (int i = m_nCurrentGrabImageNum; i < nLastViewImageNum ; ++i)
+                ((CParentFrame*)(GetParent()))->m_ImageList[i] = ((CParentFrame*)(GetParent()))->m_ImageList[i + 1];
+            ((CParentFrame*)(GetParent()))->m_ImageList[nLastViewImageNum] = Temp;
 
             m_nCurrentGrabImageNum = nLastViewImageNum;
             m_nLastSelImageNum = nLastViewImageNum;
@@ -285,7 +284,7 @@ void CClientView::OnMouseLeftDblClk(wxMouseEvent& event) {
     wxPoint ScrolledPosition;
     CalcScrolledPosition(0, 0, &(ScrolledPosition.x), &(ScrolledPosition.y));
 
-    m_nCurrentGrabImageNum = GetPosImage(m_SaveGrabPoint-ScrolledPosition);
+    m_nCurrentGrabImageNum = (int)GetPosImage(m_SaveGrabPoint-ScrolledPosition);
 
     if (m_nCurrentGrabImageNum >= 0) {
         CKcImage kcImage;
@@ -317,22 +316,55 @@ void CClientView::OnContextMenu(wxContextMenuEvent& event) {
         m_ContextPoint = ScreenToClient(m_ContextPoint);
     }
 
-    wxMenu* popupMenu = new wxMenu;
-
-    popupMenu->Append(IDM_CONTEXT_COPY, "&Copy\tCtrl+C");
-    popupMenu->Append(IDM_CONTEXT_PASTE, "&Paste\tCtrl+V");
-    popupMenu->Append(IDM_CONTEXT_DUPLICATE, "&Duplicate\tCtrl+D");
-    popupMenu->Append(IDM_CONTEXT_ZOOM_IN, "Zoom &In\tCtrl+UP");
-    popupMenu->Append(IDM_CONTEXT_ZOOM_OUT, "Zoom &Out\tCtrl+DOWN");
-    popupMenu->Append(wxID_SEPARATOR);
-    popupMenu->Append(IDM_CONTEXT_SEL_REGION, "Sel Region");
-
-    PopupMenu(popupMenu, m_ContextPoint);
-
     wxPoint ScrolledPosition;
     CalcScrolledPosition(0, 0, &(ScrolledPosition.x), &(ScrolledPosition.y));
 
-    m_nLastSelImageNum = GetPosImage(m_ContextPoint-ScrolledPosition);
+    m_nLastSelImageNum = (int)GetPosImage(m_ContextPoint-ScrolledPosition);
+
+    wxMenu* popupMenu = new wxMenu;
+
+    popupMenu->Append(IDM_CONTEXT_CUT, "Cu&t\tCtrl+X");
+    popupMenu->Append(IDM_CONTEXT_COPY, "&Copy\tCtrl+C");
+    popupMenu->Append(IDM_CONTEXT_PASTE, "&Paste\tCtrl+V");
+    popupMenu->Append(IDM_CONTEXT_DUPLICATE, "&Duplicate\tCtrl+D");
+    popupMenu->Append(wxID_SEPARATOR);
+    popupMenu->Append(IDM_CONTEXT_ZOOM_IN, "Zoom &In\tCtrl+UP");
+    popupMenu->Append(IDM_CONTEXT_ZOOM_OUT, "Zoom &Out\tCtrl+DOWN");
+    popupMenu->Append(wxID_SEPARATOR);
+    popupMenu->AppendCheckItem(IDM_CONTEXT_ZOOM_NN, "Zoom-Nearest");
+    popupMenu->AppendCheckItem(IDM_CONTEXT_ZOOM_BL, "Zoom-Bilinear");
+    popupMenu->AppendCheckItem(IDM_CONTEXT_ZOOM_BC, "Zoom-Bicubic");
+    popupMenu->Append(wxID_SEPARATOR);
+    popupMenu->Append(IDM_CONTEXT_ADD_IMAGES, "Add Images");
+    popupMenu->Append(IDM_CONTEXT_SUBTRACT_IMAGES, "Subtract Images");
+    popupMenu->Append(wxID_SEPARATOR);
+    popupMenu->Append(IDM_CONTEXT_SEL_REGION, "Sel Region");
+    popupMenu->Append(wxID_SEPARATOR);
+    popupMenu->Append(IDM_CONTEXT_IMAGE_INFOMATION, "Image Information");
+
+    PopupMenu(popupMenu, m_ContextPoint);
+}
+
+void CClientView::OnCut(wxCommandEvent& event) {
+    if (m_nLastSelImageNum < 0 || ((CParentFrame*)GetParent())->m_ImageList.size() <= m_nLastSelImageNum) return;
+
+    cv::Mat cvImage;
+    cvImage = ((CParentFrame*)GetParent())->m_ImageList[m_nLastSelImageNum].cvImage.clone();
+
+    wxImage::AddHandler(new wxPNGHandler);
+    cv::cvtColor(cvImage, cvImage, cv::COLOR_BGR2RGB);
+    wxImage image(cvImage.cols, cvImage.rows, cvImage.data, true);
+    wxBitmap bitmap = image;
+
+    if (wxTheClipboard->Open()) {
+        wxBitmapDataObject bitmapDataObject(bitmap);
+        wxTheClipboard->SetData(new wxBitmapDataObject(bitmap));
+        wxTheClipboard->Close();
+    }
+
+    ((CParentFrame*)GetParent())->m_ImageList.pop_back();
+    Refresh();
+    Update();
 }
 
 void CClientView::OnCopy(wxCommandEvent& event) {
@@ -395,7 +427,7 @@ void CClientView::OnZoomIn(wxCommandEvent& event) {
     cv::Size cvSize = ((CParentFrame*)GetParent())->m_ImageList[m_nLastSelImageNum].cvImage.size();
 
     cv::resize(((CParentFrame*)GetParent())->m_ImageList[m_nLastSelImageNum].cvImage, cvImage,
-        cvSize*2, 0, 0, cv::INTER_CUBIC);
+        cvSize*2, 0, 0, m_nZoomInterpolation);
 
     DisplayImage(cvImage, kcImage.pos.x+kcImage.cvImage.cols, kcImage.pos.y, true, false);
 }
@@ -408,13 +440,87 @@ void CClientView::OnZoomOut(wxCommandEvent& event) {
     cv::Size cvSize = ((CParentFrame*)GetParent())->m_ImageList[m_nLastSelImageNum].cvImage.size();
 
     cv::resize(((CParentFrame*)GetParent())->m_ImageList[m_nLastSelImageNum].cvImage, cvImage,
-        cvSize/2, 0, 0, cv::INTER_CUBIC);
+        cvSize/2, 0, 0, m_nZoomInterpolation);
 
     DisplayImage(cvImage, kcImage.pos.x+kcImage.cvImage.cols, kcImage.pos.y, true, false);
+}
+
+void CClientView::OnZoomNn(wxCommandEvent& event) {
+    m_nZoomInterpolation = 0;
+}
+
+void CClientView::OnZoomBl(wxCommandEvent& event) {
+    m_nZoomInterpolation = 1;
+}
+
+void CClientView::OnZoomBc(wxCommandEvent& event) {
+    m_nZoomInterpolation = 2;
+}
+
+void CClientView::OnUpdateZoomNn(wxUpdateUIEvent& event) {
+    event.Check(m_nZoomInterpolation == 0);
+}
+
+void CClientView::OnUpdateZoomBl(wxUpdateUIEvent& event) {
+    event.Check(m_nZoomInterpolation == 1);
+}
+
+void CClientView::OnUpdateZoomBc(wxUpdateUIEvent& event) {
+    event.Check(m_nZoomInterpolation == 2);
+}
+
+void CClientView::OnAddImages(wxCommandEvent& event) {
+    CKcImage kcImage1 = GetLastSelImage();
+    if (kcImage1.cvImage.empty()) return;
+
+    CKcImage kcImage2 = GetLastSelImage(1);
+    if (kcImage2.cvImage.empty()) return;
+
+    cv::Mat cvImage;
+
+    try {
+        cvImage = kcImage1.cvImage / 2 + kcImage2.cvImage / 2;
+
+        DisplayImage(cvImage, kcImage1.pos.x + kcImage1.cvImage.cols, kcImage1.pos.y, true, false);
+    }
+    catch (std::exception& e) {
+        DlgPrintf("*** Exception: %s", e.what());
+    }
+}
+
+void CClientView::OnSubtractImages(wxCommandEvent& event) {
+    CKcImage kcImage1 = GetLastSelImage();
+    if (kcImage1.cvImage.empty()) return;
+
+    CKcImage kcImage2 = GetLastSelImage(1);
+    if (kcImage2.cvImage.empty()) return;
+
+    cv::Mat cvImage;
+
+    try {
+        cvImage = 127 + kcImage1.cvImage / 2 - kcImage2.cvImage / 2;
+
+        DisplayImage(cvImage, kcImage1.pos.x + kcImage1.cvImage.cols, kcImage1.pos.y, true, false);
+    }
+    catch (std::exception& e) {
+        DlgPrintf("*** Exception: %s", e.what());
+    }
 }
 
 void CClientView::OnSelRegion(wxCommandEvent& event) {
     m_nSelRegionIndex = 1;
 
     m_SaveMousePos = wxPoint(-10, -10);
+}
+
+void CClientView::OnImageInformation(wxCommandEvent& event) {
+    if (m_nLastSelImageNum < 0 || ((CParentFrame*)GetParent())->m_ImageList.size() <= m_nLastSelImageNum) return;
+
+    CKcImage kcImage = ((CParentFrame*)GetParent())->m_ImageList[m_nLastSelImageNum];
+    cv::Size cvSize = ((CParentFrame*)GetParent())->m_ImageList[m_nLastSelImageNum].cvImage.size();
+
+    std::stringstream ss;
+    ss << cvSize.width << "x" << cvSize.height << ", (left,top): (" << kcImage.pos.x << "," << kcImage.pos.y << "), BGR, " << "width bytes: " << kcImage.cvImage.step;
+
+    wxMessageBox(ss.str(), wxT("Image information"), wxICON_INFORMATION);
 }
