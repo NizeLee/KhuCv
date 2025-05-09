@@ -103,7 +103,8 @@
     - $ make
   + Mac (+Xcode) I
     - $ cd build-mac
-    - $ cmake . -G Xcode
+    - [SDI] $ cmake . -G Xcode -D SDI=True
+    - [MDI] $ cmake . -G Xcode -D SDI=False
   + Mac (+Xcode) II
     - wxWidgets sample: https://wiki.wxwidgets.org/Creating_Xcode_projects_for_wxWidgets_applications
     - Add source/header files 
