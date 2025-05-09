@@ -102,12 +102,15 @@
     - [MDI] $ cmake . -D SDI=False
     - $ make
   + Mac (+Xcode) I
+    - $ cd build-mac
+    - $ cmake . -G Xcode
+  + Mac (+Xcode) II
     - wxWidgets sample: https://wiki.wxwidgets.org/Creating_Xcode_projects_for_wxWidgets_applications
     - Add source/header files 
     - Add Include and library paths
     - Add opencv libraries
     - Build
-  + Mac II
+  + Mac III
     - $ cd build-mac
     - [SDI] $ cmake . -D SDI=True
     - [MDI] $ cmake . -D SDI=False
