@@ -38,7 +38,7 @@ else()
 endif()
 
 include_directories("${WX_ROOTDIR}/include" "${WX_ROOTDIR}/include/msvc" ${OpenCV_INCLUDE_DIRS})
-link_directories("${WX_ROOTDIR}/lib/vc_x64_lib")
+link_directories("${WX_ROOTDIR}/lib/vc_ReleaseX64_lib")
 
 add_executable(${PROJECT_NAME} ${PROG_SRCS})
 
